@@ -11,27 +11,31 @@
       background: #000;
     }
     video, canvas {
-      position: absolute;
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100vw;
       height: 100vh;
       object-fit: cover;
+      z-index: 0;
     }
     #emotion {
-      position: absolute;
-      top: 10px;
+      position: fixed;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
       font-size: 2rem;
       color: white;
       font-family: Arial, sans-serif;
       text-shadow: 0 0 10px black;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
   <video id="video" autoplay muted playsinline></video>
   <canvas id="canvas"></canvas>
-  <div id="emotion">Определение эмоций...</div>
+  <div id="emotion">Загрузка...</div>
 
   <script>
     const video = document.getElementById('video');
@@ -39,57 +43,30 @@
     const emotionText = document.getElementById('emotion');
     const ctx = canvas.getContext('2d');
 
-    // Запрашиваем камеру
     async function startCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-    }
-
-    // Загружаем модели face-api.js
-    async function loadModels() {
-      await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/models');
-      await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/models');
-      await faceapi.nets.faceExpressionNet.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js/models');
-    }
-
-    // Запуск анализа
-    video.addEventListener('play', async () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      async function detect() {
-        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-          .withFaceLandmarks()
-          .withFaceExpressions();
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        if (detections.length > 0) {
-          const expressions = detections[0].expressions;
-          let maxEmotion = '';
-          let maxValue = 0;
-          for (let [emotion, value] of Object.entries(expressions)) {
-            if (value > maxValue) {
-              maxValue = value;
-              maxEmotion = emotion;
-            }
-          }
-
-          emotionText.textContent = `Эмоция: ${translateEmotion(maxEmotion)} (${(maxValue*100).toFixed(1)}%)`;
-
-          const box = detections[0].detection.box;
-          ctx.strokeStyle = 'lime';
-          ctx.lineWidth = 3;
-          ctx.strokeRect(box.x, box.y, box.width, box.height);
-        } else {
-          emotionText.textContent = "Лицо не обнаружено";
-        }
-
-        requestAnimationFrame(detect);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'user', // фронтальная камера
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+        video.srcObject = stream;
+        await video.play();
+      } catch (err) {
+        console.error("Ошибка доступа к камере:", err);
+        emotionText.textContent = "Не удалось получить доступ к камере";
       }
-      detect();
-    });
+    }
+
+    async function loadModels() {
+      const modelUrl = "https://cdn.jsdelivr.net/npm/face-api.js/models";
+      await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl);
+      await faceapi.nets.faceExpressionNet.loadFromUri(modelUrl);
+    }
 
     function translateEmotion(emotion) {
       const map = {
@@ -103,6 +80,46 @@
       };
       return map[emotion] || emotion;
     }
+
+    video.addEventListener('loadedmetadata', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      async function detect() {
+        const detections = await faceapi.detectAllFaces(
+          video, new faceapi.TinyFaceDetectorOptions()
+        ).withFaceLandmarks().withFaceExpressions();
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        if (detections.length > 0) {
+          const best = detections[0];
+          const box = best.detection.box;
+
+          // Найдём эмоцию с макс. вероятностью
+          let maxEmotion = '';
+          let maxValue = 0;
+          for (let [emo, val] of Object.entries(best.expressions)) {
+            if (val > maxValue) {
+              maxValue = val;
+              maxEmotion = emo;
+            }
+          }
+
+          emotionText.textContent = `${translateEmotion(maxEmotion)} (${(maxValue * 100).toFixed(0)}%)`;
+
+          // Рисуем рамку
+          ctx.strokeStyle = "lime";
+          ctx.lineWidth = 3;
+          ctx.strokeRect(box.x, box.y, box.width, box.height);
+        } else {
+          emotionText.textContent = "Лицо не найдено";
+        }
+        requestAnimationFrame(detect);
+      }
+      detect();
+    });
 
     loadModels().then(startCamera);
   </script>
