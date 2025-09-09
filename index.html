@@ -2,206 +2,571 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AirDraw Fullscreen</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>AirDraw Ч Pinch to Paint (Enhanced)</title>
+  <meta name="description" content="Draw in the air using pinch gesture Ч MediaPipe hand tracking in-browser." />
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
+    :root{
+      --ui-bg: rgba(10,12,18,0.45);
+      --ui-border: rgba(255,255,255,0.06);
+      --accent: #7ee787;
+      --muted: rgba(255,255,255,0.7);
+      --glass: rgba(255,255,255,0.04);
     }
-    #stage {
-      position: relative;
-      width: 100%;
-      height: 100%;
-    }
-    #video {
+    html,body{height:100%;margin:0;background:#000;color:white;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    #stage{position:fixed;inset:0;display:flex;align-items:stretch;justify-content:center;background:#000}
+    /* video fills the stage */
+    #video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:center center;}
+    /* canvas stacks on top of video */
+    canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;-webkit-user-select:none;user-select:none}
+    #ui {
       position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      left: 12px;
+      top: 12px;
+      z-index: 120;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      background:var(--ui-bg);
+      padding:8px;
+      border-radius:12px;
+      border:1px solid var(--ui-border);
+      backdrop-filter: blur(8px) saturate(120%);
     }
-    canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
+    .btn{
+      background:transparent;border:1px solid var(--ui-border);color:var(--muted);
+      padding:8px 10px;border-radius:10px;font-size:13px;cursor:pointer;
     }
+    .btn:hover{border-color:rgba(255,255,255,0.12);color:white}
+    .small {font-size:12px;color:rgba(255,255,255,0.85)}
+    .panel {
+      position:absolute;right:12px;top:12px;z-index:120;padding:10px;border-radius:12px;background:var(--ui-bg);border:1px solid var(--ui-border);
+      display:flex;flex-direction:column;gap:8px;min-width:220px;
+      backdrop-filter: blur(8px);
+    }
+    .row{display:flex;align-items:center;gap:8px}
+    input[type="color"]{width:36px;height:34px;padding:0;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent}
+    input[type="range"]{width:120px}
     #hint {
-      position: absolute;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-family: sans-serif;
+      position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
+      background:linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.6));
+      color: #e6fff0; padding:8px 14px;border-radius:18px;font-size:13px;border:1px solid rgba(255,255,255,0.06);z-index:120;
+      backdrop-filter: blur(6px);
+    }
+    .badge {padding:4px 8px;border-radius:12px;background:rgba(0,0,0,0.36);border:1px solid var(--ui-border);font-size:12px;color:var(--muted)}
+    footer{position:fixed;left:12px;bottom:12px;z-index:120;color:rgba(255,255,255,0.6);font-size:12px}
+    /* compact mobile friendly layout */
+    @media (max-width:520px){
+      .panel{right:8px;top:auto;bottom:72px;min-width:180px}
+      #ui{left:8px;top:8px;padding:6px}
     }
   </style>
 </head>
 <body>
   <div id="stage">
-    <video id="video" autoplay playsinline></video>
+    <video id="video" autoplay playsinline muted></video>
+    <!-- drawing canvas (persistent strokes) -->
     <canvas id="draw"></canvas>
+    <!-- overlay: landmarks, skeleton, transient markers -->
     <canvas id="overlay"></canvas>
-    <div id="hint">–азрешите доступ к камере</div>
+
+    <div id="ui" role="toolbar" aria-label="controls">
+      <button class="btn" id="btnSwitch">Switch Cam</button>
+      <button class="btn" id="btnUndo">Undo</button>
+      <button class="btn" id="btnRedo">Redo</button>
+      <button class="btn" id="btnClear">Clear</button>
+      <button class="btn" id="btnSave">Save</button>
+      <span class="badge" id="fpsBadge">Ч FPS</span>
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="row"><strong>Brush</strong><div style="flex:1"></div></div>
+      <div class="row">
+        <input id="color" type="color" value="#ffea4d" aria-label="color picker">
+        <label class="small">Size <input id="size" type="range" min="1" max="30" value="6" /></label>
+      </div>
+
+      <div class="row">
+        <label class="small">Pinch sensitivity</label>
+        <input id="pinch" type="range" min="2" max="10" value="4" />
+      </div>
+
+      <div class="row">
+        <label><input id="mirror" type="checkbox" checked /> Mirror</label>
+        <label style="margin-left:auto"><input id="showLandmarks" type="checkbox" checked /> Landmarks</label>
+      </div>
+
+      <div class="row">
+        <label class="small">Stabilization</label>
+        <input id="smooth" type="range" min="0" max="100" value="70" />
+      </div>
+
+      <div class="row small" style="justify-content:space-between">
+        <div>Model FPS cap</div>
+        <div><select id="fpsCap"><option value="30">30</option><option value="20">20</option><option value="15">15</option></select></div>
+      </div>
+    </div>
+
+    <div id="hint">Requesting camera accessЕ</div>
+    <footer>Built with MediaPipe Tasks Ч runs in your browser</footer>
   </div>
 
   <script type="module">
-    import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7";
+/* Enhanced AirDraw Ч single file
+   - MediaPipe HandLandmarker (tasks-vision)
+   - pinch-to-draw with hysteresis + smoothing + throttling
+   - undo/redo, save, switch camera, brush options
+*/
 
-    const ui = {
-      video: document.getElementById('video'),
-      draw: document.getElementById('draw'),
-      overlay: document.getElementById('overlay'),
-      hint: document.getElementById('hint'),
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7";
+
+// UI refs
+const video = document.getElementById('video');
+const drawC = document.getElementById('draw');
+const overlayC = document.getElementById('overlay');
+const hint = document.getElementById('hint');
+const btnSwitch = document.getElementById('btnSwitch');
+const btnUndo = document.getElementById('btnUndo');
+const btnRedo = document.getElementById('btnRedo');
+const btnClear = document.getElementById('btnClear');
+const btnSave = document.getElementById('btnSave');
+const fpsBadge = document.getElementById('fpsBadge');
+
+const colorInput = document.getElementById('color');
+const sizeInput = document.getElementById('size');
+const pinchInput = document.getElementById('pinch'); // integer 2..10 => threshold use /100
+const mirrorInput = document.getElementById('mirror');
+const showLandmarksInput = document.getElementById('showLandmarks');
+const smoothInput = document.getElementById('smooth'); // 0..100 (alpha smoothing inverse)
+const fpsCapSelect = document.getElementById('fpsCap');
+
+// contexts
+let drawCtx = drawC.getContext('2d', { alpha: true });
+let overlayCtx = overlayC.getContext('2d', { alpha: true });
+
+// state
+let landmarker = null;
+let running = false;
+let facingMode = 'user'; // or 'environment'
+let lastIndexPt = null;
+let pinchActive = false;
+let smoothedIndex = null; // for EMA smoothing
+let lastDetectionTime = 0;
+let modelIntervalMs = 1000 / Number(fpsCapSelect.value);
+let lastFrameTs = performance.now();
+let fpsLastTick = performance.now();
+let frameCounter = 0;
+
+// undo/redo: store array of paths; each path = [{x,y}, ...], plus stroke props
+const donePaths = [];
+const redoStack = [];
+
+// helpers
+function setHint(txt) { hint.textContent = txt; }
+function setError(txt) { hint.textContent = txt; hint.style.background = 'linear-gradient(180deg, rgba(100,0,0,0.55), rgba(60,0,0,0.6))' }
+function clearErrorVisual() { hint.style.background = '' }
+
+// canvas resizing (account devicePixelRatio)
+function resizeAll() {
+  const w = window.innerWidth, h = window.innerHeight;
+  for (const c of [drawC, overlayC]) {
+    c.style.width = w + 'px';
+    c.style.height = h + 'px';
+    c.width = Math.floor(w * devicePixelRatio);
+    c.height = Math.floor(h * devicePixelRatio);
+  }
+  // scale contexts
+  drawCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  overlayCtx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  redrawAllPaths(); // redraw persistent strokes on size change
+}
+window.addEventListener('resize', resizeAll);
+
+// drawing helpers
+function redrawAllPaths() {
+  // clear draw canvas
+  drawCtx.clearRect(0,0,drawC.width,drawC.height);
+  for (const p of donePaths) {
+    drawPathRaw(drawCtx, p.points, p.color, p.size);
+  }
+}
+
+function drawPathRaw(ctx, pts, color, size) {
+  if (!pts || pts.length === 0) return;
+  // glow effect: draw multiple strokes with low alpha
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  // glow layers
+  for (let i=3;i>=1;i--){
+    ctx.strokeStyle = hexToRgba(color, 0.06 * i);
+    ctx.lineWidth = size * (i + 1.6);
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let j=1;j<pts.length;j++) ctx.lineTo(pts[j].x, pts[j].y);
+    ctx.stroke();
+  }
+  // main stroke
+  ctx.strokeStyle = color;
+  ctx.lineWidth = size;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let j=1;j<pts.length;j++) ctx.lineTo(pts[j].x, pts[j].y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Keep a currentPath while drawing
+let currentPath = null;
+function startPath(pt) {
+  currentPath = { points: [pt], color: colorInput.value, size: Number(sizeInput.value) };
+  // adding to donePaths happens when path completes
+}
+function addPointToPath(pt) {
+  if (!currentPath) { startPath(pt); return; }
+  currentPath.points.push(pt);
+  // draw incremental segment for responsiveness
+  drawPathRaw(drawCtx, currentPath.points.slice(-2), currentPath.color, currentPath.size);
+}
+function endPath() {
+  if (currentPath && currentPath.points.length>0) {
+    donePaths.push(currentPath);
+    // clear redo on new action
+    redoStack.length = 0;
+    currentPath = null;
+  }
+}
+
+// undo/redo actions
+btnUndo.addEventListener('click', () => {
+  if (donePaths.length===0) return;
+  const p = donePaths.pop();
+  redoStack.push(p);
+  redrawAllPaths();
+});
+btnRedo.addEventListener('click', () => {
+  if (redoStack.length===0) return;
+  const p = redoStack.pop();
+  donePaths.push(p);
+  redrawAllPaths();
+});
+btnClear.addEventListener('click', () => {
+  donePaths.length = 0;
+  redoStack.length = 0;
+  drawCtx.clearRect(0,0,drawC.width,drawC.height);
+});
+
+// save
+btnSave.addEventListener('click', () => {
+  // merge draw canvas over a snapshot of video
+  try {
+    // create temp canvas
+    const tmp = document.createElement('canvas');
+    tmp.width = drawC.width; tmp.height = drawC.height;
+    const tctx = tmp.getContext('2d');
+    // draw video frame scaled to canvas (use video size)
+    tctx.drawImage(video, 0, 0, tmp.width / devicePixelRatio, tmp.height / devicePixelRatio);
+    // draw strokes (drawC already in device pixels, but transform set for CSS scaling)
+    // easier: draw drawC as image (scaled): use css dimensions
+    tctx.drawImage(drawC, 0, 0, tmp.width, tmp.height);
+    const url = tmp.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url; a.download = 'airdraw.png'; a.click();
+  } catch (e) {
+    console.error(e);
+    setError('Failed to save image.');
+  }
+});
+
+// camera switch
+btnSwitch.addEventListener('click', async () => {
+  facingMode = (facingMode === 'user') ? 'environment' : 'user';
+  await restartCamera();
+});
+
+// utils
+function hexToRgba(hex, a=1){
+  const c = hex.replace('#','');
+  const bigint = parseInt(c,16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// smoothing: exponential moving average
+function smoothPoint(prev, curr, alpha) {
+  if (!prev) return { x: curr.x, y: curr.y };
+  return { x: prev.x * alpha + curr.x * (1 - alpha), y: prev.y * alpha + curr.y * (1 - alpha) };
+}
+
+// model & detection setup
+async function setupLandmarker() {
+  const filesetResolver = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7/wasm');
+  landmarker = await HandLandmarker.createFromOptions(filesetResolver, {
+    baseOptions: {
+      modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
+    },
+    runningMode: 'VIDEO',
+    numHands: 1,
+  });
+}
+
+// camera
+async function startCamera() {
+  try {
+    const constraints = {
+      audio: false,
+      video: { facingMode }
     };
-
-    const state = {
-      landmarker: null,
-      lastIdxPt: null,
-      pinchActive: false,
-    };
-
-    function resizeCanvases() {
-      for (const c of [ui.draw, ui.overlay]) {
-        c.width = window.innerWidth * devicePixelRatio;
-        c.height = window.innerHeight * devicePixelRatio;
-        c.style.width = window.innerWidth + 'px';
-        c.style.height = window.innerHeight + 'px';
-      }
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await video.play();
+    setHint('Loading hand tracking modelЕ');
+  } catch (e) {
+    console.error(e);
+    setError('Camera not available. Make sure the site is HTTPS and camera permission is granted.');
+    throw e;
+  }
+}
+async function restartCamera() {
+  // stop existing tracks
+  try {
+    if (video.srcObject) {
+      const tracks = video.srcObject.getTracks();
+      tracks.forEach(t => t.stop());
     }
-    window.addEventListener('resize', resizeCanvases);
+  } catch(e){ /* ignore */ }
+  await startCamera();
+}
 
-    async function setupCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' }, audio: false
-      });
-      ui.video.srcObject = stream;
-      await ui.video.play();
+// main run loop: throttled by fps cap
+async function startEverything() {
+  if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
+    setError('This browser does not support camera access (getUserMedia). Open in Chrome/Edge/Safari.');
+    return;
+  }
+
+  setHint('Requesting camera accessЕ');
+  await startCamera();
+  resizeAll();
+  setHint('Loading hand tracking modelЕ');
+  await setupLandmarker();
+  setHint('Show your hand and pinch thumb + index to draw');
+  running = true;
+  lastIndexPt = null;
+  pinchActive = false;
+  smoothedIndex = null;
+  lastDetectionTime = 0;
+  animationLoop();
+}
+
+// detection + drawing loop
+async function animationLoop(ts) {
+  if (!running) return;
+  const now = performance.now();
+  // update fps badge
+  frameCounter++;
+  if (now - fpsLastTick > 1000) {
+    fpsBadge.textContent = `${frameCounter} FPS`;
+    frameCounter = 0;
+    fpsLastTick = now;
+  }
+
+  // throttle model calls
+  modelIntervalMs = Math.max(10, 1000 / Number(fpsCapSelect.value));
+  if (now - lastDetectionTime >= modelIntervalMs) {
+    lastDetectionTime = now;
+    // detect for video, use timestamp
+    try {
+      const result = landmarker.detectForVideo(video, performance.now());
+      handleDetectionResult(result);
+    } catch (e) {
+      console.error('detection error', e);
     }
+  }
+  requestAnimationFrame(animationLoop);
+}
 
-    async function setupLandmarker() {
-      const resolver = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7/wasm"
-      );
-      state.landmarker = await HandLandmarker.createFromOptions(resolver, {
-        baseOptions: {
-          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-        },
-        runningMode: "VIDEO",
-        numHands: 1,
-      });
-    }
+// handle model result
+function handleDetectionResult(result) {
+  const W = drawC.width / devicePixelRatio;
+  const H = drawC.height / devicePixelRatio;
+  // clear overlay
+  overlayCtx.clearRect(0,0,overlayC.width, overlayC.height);
 
-    function normToPx(pt, w, h) {
-      return { x: pt.x * w, y: pt.y * h };
-    }
-    function distance(a, b) {
-      return Math.hypot(a.x - b.x, a.y - b.y);
-    }
-    function drawLandmarks(ctx, landmarks, w, h) {
-      ctx.clearRect(0, 0, w, h);
-      ctx.strokeStyle = "rgba(0,255,0,0.6)";
-      ctx.fillStyle = "rgba(0,255,0,0.9)";
-      ctx.lineWidth = 2 * devicePixelRatio;
+  if (!result || !result.landmarks || !result.landmarks[0]) {
+    // no hand
+    // if draw was active, finalize
+    if (pinchActive) { endPath(); pinchActive = false; }
+    setHint('Hand not detected Ч show your hand');
+    return;
+  }
+  // optionally get a confidence (some versions provide score)
+  const lm = result.landmarks[0]; // array of 21 normalized points {x,y,z}
+  // If model provides handedness/confidence: check it (defensive)
+  // const conf = result.handedness?.[0]?.score ?? 1;
 
-      // Connections
-      const conns = [
-        [0,1],[1,2],[2,3],[3,4],
-        [0,5],[5,6],[6,7],[7,8],
-        [5,9],[9,10],[10,11],[11,12],
-        [9,13],[13,14],[14,15],[15,16],
-        [13,17],[0,17],[17,18],[18,19],[19,20]
-      ];
-      ctx.beginPath();
-      for (const [a,b] of conns) {
-        const A = normToPx(landmarks[a], w, h);
-        const B = normToPx(landmarks[b], w, h);
-        ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y);
-      }
-      ctx.stroke();
+  // map normalized coords to pixel coords (optionally mirror)
+  const mirror = mirrorInput.checked;
+  const mapped = lm.map(p => {
+    const x = (mirror ? (1 - p.x) : p.x) * W;
+    const y = p.y * H;
+    return { x, y };
+  });
 
-      for (const p of landmarks) {
-        const P = normToPx(p, w, h);
-        ctx.beginPath();
-        ctx.arc(P.x, P.y, 4 * devicePixelRatio, 0, Math.PI*2);
-        ctx.fill();
-      }
-    }
-    function drawLine(ctx, from, to) {
-      ctx.strokeStyle = "#ff0";
-      ctx.lineWidth = 6 * devicePixelRatio;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
-      ctx.stroke();
-    }
+  // draw landmarks if requested
+  if (showLandmarksInput.checked) drawLandmarksOverlay(mapped);
 
-    async function start() {
-      ui.hint.textContent = "«апрашиваем камеруЕ";
-      await setupCamera();
-      resizeCanvases();
-      ui.hint.textContent = "«агружаем модельЕ";
-      await setupLandmarker();
-      ui.hint.textContent = "ѕокажите руку и соедините большой + указательный палец";
+  // smoothing alpha from slider (higher slider -> more smoothing => higher alpha)
+  const smoothVal = Number(smoothInput.value) / 100; // 0..1
+  const alpha = clamp(0.02, 0.98, 1 - smoothVal * 0.95); // alpha for EMA: closer to 1 = more inertia
+  // compute smoothed index tip (landmark 8)
+  const idx = mapped[8];
+  smoothedIndex = smoothPoint(smoothedIndex, idx, alpha);
 
-      loop();
-    }
+  // pinch hysteresis thresholds (normalized input from slider)
+  const pinchSetting = Number(pinchInput.value) / 100; // e.g. 0.04
+  // hysteresis: two thresholds: on/off (multipliers)
+  const PINCH_ON = pinchSetting * 0.9;  // tighter to start
+  const PINCH_OFF = pinchSetting * 1.8; // looser to stop
 
-    function loop() {
-      const { videoWidth: vw, videoHeight: vh } = ui.video;
-      if (vw === 0 || vh === 0) { requestAnimationFrame(loop); return; }
+  // compute normalized distance between thumb tip (4) and index tip (8) BEFORE mapping
+  const thumb = lm[4], index = lm[8];
+  const normDist = Math.hypot(thumb.x - index.x, thumb.y - index.y);
 
-      const W = ui.draw.width, H = ui.draw.height;
-      const ctxOverlay = ui.overlay.getContext('2d');
-      const ctxDraw = ui.draw.getContext('2d');
+  // optionally reject if landmarks look suspicious (too small or huge)
+  if (normDist > 0.7 || normDist <= 0) {
+    // improbable Ч ignore
+    if (pinchActive) { endPath(); pinchActive = false; }
+    setHint('Hand detected but landmarks look noisy Ч reposition hand');
+    return;
+  }
 
-      const now = performance.now();
-      const result = state.landmarker.detectForVideo(ui.video, now);
+  // hysteresis logic
+  let pinchNow = pinchActive;
+  if (!pinchActive && normDist < PINCH_ON) pinchNow = true;
+  if (pinchActive && normDist > PINCH_OFF) pinchNow = false;
 
-      if (result?.landmarks?.[0]) {
-        const lm = result.landmarks[0];
-        drawLandmarks(ctxOverlay, lm, W, H);
+  // if pinch engaged, draw
+  if (pinchNow) {
+    // convert smoothedIndex to drawing canvas coordinate system (which matches CSS pixels)
+    const pt = { x: smoothedIndex.x, y: smoothedIndex.y };
+    // variable stroke size simulating pressure (inverse of finger spacing)
+    const spacing = clamp(0.005, 0.12, normDist);
+    const pressureFactor = 1 - (spacing - 0.005) / (0.12 - 0.005); // 0..1
+    const baseSize = Number(sizeInput.value);
+    const dynamicSize = Math.max(1, Math.round(baseSize * (0.65 + pressureFactor * 1.6)));
 
-        const thumbTip = lm[4];
-        const indexTip = lm[8];
-        const pinch = distance(thumbTip, indexTip) < 0.04; // нормализованный порог
-
-        const idxPx = normToPx(indexTip, W, H);
-
-        if (pinch) {
-          if (state.lastIdxPt) drawLine(ctxDraw, state.lastIdxPt, idxPx);
-          state.lastIdxPt = idxPx;
-          ui.hint.textContent = "–исуемЕ разожмите пальцы чтобы остановить";
-        } else {
-          state.lastIdxPt = null;
-          ui.hint.textContent = "ѕокажите pinch-жест чтобы рисовать";
-        }
-      } else {
-        ctxOverlay.clearRect(0, 0, W, H);
-        state.lastIdxPt = null;
-        ui.hint.textContent = "–ука не найдена";
-      }
-
-      requestAnimationFrame(loop);
-    }
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-      ui.hint.textContent = "Ётот браузер не поддерживает getUserMedia()";
+    // if pinch just started
+    if (!pinchActive) {
+      pinchActive = true;
+      startPath(pt);
     } else {
-      start().catch(err => {
-        console.error(err);
-        ui.hint.textContent = "ќшибка инициализации камеры";
-      });
+      // continue drawing
+      // temporarily override brush size for this path (visual variety)
+      currentPath.size = dynamicSize;
+      addPointToPath(pt);
     }
+    setHint('Drawing Ч release to stop');
+  } else {
+    // if we were drawing, end current path
+    if (pinchActive) {
+      endPath();
+      pinchActive = false;
+    }
+    setHint('Pinch (thumb + index) to draw');
+  }
+}
+
+// draw landmarks overlay
+function drawLandmarksOverlay(mapped) {
+  const ctx = overlayCtx;
+  ctx.save();
+  ctx.clearRect(0,0,overlayC.width, overlayC.height);
+  ctx.scale(1,1);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0,255,160,0.9)';
+  ctx.fillStyle = 'rgba(0,255,160,0.95)';
+  // connections
+  const conns = [
+    [0,1],[1,2],[2,3],[3,4],
+    [0,5],[5,6],[6,7],[7,8],
+    [5,9],[9,10],[10,11],[11,12],
+    [9,13],[13,14],[14,15],[15,16],
+    [13,17],[0,17],[17,18],[18,19],[19,20]
+  ];
+  ctx.beginPath();
+  for (const [a,b] of conns) {
+    const A = mapped[a], B = mapped[b];
+    ctx.moveTo(A.x, A.y);
+    ctx.lineTo(B.x, B.y);
+  }
+  ctx.stroke();
+
+  // dots
+  for (let i=0;i<mapped.length;i++){
+    const p = mapped[i];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 5, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// clamp utility
+function clamp(a,b,v){ return Math.max(a, Math.min(b, v)); }
+
+// small safety: if model fails repeatedly, stop calling to avoid CPU loop
+let errorCount = 0;
+function handleModelError(e) {
+  console.error(e);
+  errorCount++;
+  if (errorCount > 8) {
+    setError('Hand tracking failed repeatedly. Try reloading or use a different browser.');
+    running = false;
+  }
+}
+
+// helpers for page lifecycle
+window.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // optionally pause detection to save battery
+    running = false;
+  } else {
+    if (!running) { running = true; animationLoop(); }
+  }
+});
+
+// basic UI reactive behavior
+mirrorInput.addEventListener('change', () => {
+  const m = mirrorInput.checked;
+  video.style.transform = m ? 'scaleX(-1)' : 'none';
+});
+fpsCapSelect.addEventListener('change', () => {
+  modelIntervalMs = Math.max(10, 1000 / Number(fpsCapSelect.value));
+});
+
+// init
+resizeAll();
+(async () => {
+  try {
+    await startEverything();
+    clearErrorVisual();
+  } catch (e) {
+    handleModelError(e);
+  }
+})();
+
+/* Notes:
+ - The model returns normalized coordinates (x: 0..1, y: 0..1). We map to CSS pixels for drawing.
+ - EMA smoothing reduces jitter; hysteresis reduces pinch chatter.
+ - We throttle handlandmarker to a lower FPS (configurable) to improve stability.
+ - Undo/Redo stores arrays of points Ч keeps memory modest for casual use.
+ - Save merges current video frame with drawn strokes.
+ - If you need multi-hand support or improved accuracy, consider increasing numHands or using a
+   more advanced filter (Kalman) for each landmark.
+*/
   </script>
 </body>
 </html>
