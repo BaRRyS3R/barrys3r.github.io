@@ -1,127 +1,555 @@
-<!DOCTYPE html>
-<html lang="ru">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Face & Emotion Tracking</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #000;
-    }
-    video, canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: 0;
-    }
-    #emotion {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 2rem;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-shadow: 0 0 10px black;
-      z-index: 10;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>AirAR � Draw in the world (WebXR + Hand Tracking)</title>
+<meta name="description" content="Draw in AR with pinch-to-draw and gesture UI (thumbs up/down). WebXR + XRHand." />
+<style>
+  :root{
+    --bg: #05070a;
+    --panel: rgba(255,255,255,0.06);
+    --accent: #7ee787;
+    --muted: rgba(255,255,255,0.8);
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--muted);font-family:Inter,system-ui,Roboto,Arial;}
+  #container{position:fixed;inset:0;overflow:hidden}
+  canvas, .xr-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* overlay UI */
+  .ui {
+    position: absolute; left: 12px; top: 12px; z-index: 30;
+    display:flex; gap:10px; align-items:center; background:var(--panel); padding:8px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(8px);
+  }
+  .btn { background:transparent;border:1px solid rgba(255,255,255,0.06); color:var(--muted); padding:8px 10px; border-radius:10px; cursor:pointer; font-size:13px;}
+  .btn:hover{border-color:rgba(255,255,255,0.12); color:white}
+  .panel { position:absolute; right:12px; top:12px; z-index:30; width:220px; background:var(--panel); padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(6px) }
+  label.small{font-size:12px;color:rgba(255,255,255,0.8)}
+  #hint { position:absolute; left:50%; top:calc(100% - 70px); transform:translateX(-50%); z-index:40; background:linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.6)); color:#e6fff0; padding:8px 14px; border-radius:16px; border:1px solid rgba(255,255,255,0.06) }
+  #badge { font-size:12px; padding:4px 8px; border-radius:10px; background:rgba(0,0,0,0.36); border:1px solid rgba(255,255,255,0.04); color:var(--muted) }
+  footer { position: absolute; left:12px; bottom:12px; z-index:30; opacity:0.9; font-size:12px }
+  .mini { font-size:12px }
+  /* quick full-screen AR button style */
+  #enter-ar { background:linear-gradient(90deg,#00c6ff,#0072ff); color:white; border:none; padding:10px 14px; border-radius:12px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,0.4); }
+  @media (max-width:520px){
+    .panel{right:8px;top:auto;bottom:72px;width:180px}
+    .ui{left:8px;top:8px;padding:6px}
+  }
+</style>
 </head>
 <body>
-  <video id="video" autoplay muted playsinline></video>
-  <canvas id="canvas"></canvas>
-  <div id="emotion">Загрузка...</div>
+<div id="container">
+  <!-- three.js will append a WebGL canvas here (we still include fallback canvas for screenshots) -->
+  <canvas id="fallbackCanvas" class="xr-canvas" style="display:none"></canvas>
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const emotionText = document.getElementById('emotion');
-    const ctx = canvas.getContext('2d');
+  <div class="ui" role="toolbar">
+    <button id="enter-ar" class="btn">Start AR</button>
+    <button id="modeBtn" class="btn">Mode: Draw</button>
+    <div id="badge">XR Hand: <span id="xrHandState">unknown</span></div>
+  </div>
 
-    async function startCamera() {
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Brush</strong></div>
+      <div class="mini">Gestures: ?? / ??</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <input id="color" type="color" value="#ffcc33" />
+      <label class="small">Size</label>
+      <input id="size" type="range" min="1" max="40" value="6" style="flex:1" />
+    </div>
+
+    <div style="margin-top:10px">
+      <label class="small">Pinch sensitivity</label>
+      <input id="pinch" type="range" min="2" max="12" value="4" style="width:100%" />
+    </div>
+
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button id="undoBtn" class="btn">Undo</button>
+      <button id="clearBtn" class="btn">Clear</button>
+      <button id="snapBtn" class="btn">Snapshot</button>
+    </div>
+
+    <div style="margin-top:10px;" class="small">Notes: Use Chrome (Android) with ARCore device. If XR Hand unsupported, tap to place anchors.</div>
+  </div>
+
+  <div id="hint">Press <strong>Start AR</strong> to begin.</div>
+  <footer>AirAR � WebXR + XRHand demo</footer>
+</div>
+
+<!-- three.js + WebXR helpers from CDN -->
+<script type="module">
+/*
+AirAR � single-file WebXR AR + Hand Tracking drawing demo
+- Uses three.js r152+ via unpkg (module builds)
+- Uses WebXR XRHand joints where available
+- Draws anchored strokes in world space (via hit test)
+- Gesture detection: Thumbs Up / Thumbs Down -> triggers feedback
+- Fallback: If no WebXR, instruct user
+*/
+
+/* IMPORTANT:
+   - Best on Chrome for Android with ARCore-capable device.
+   - Deploy over HTTPS (GitHub Pages ok).
+*/
+
+import * as THREE from 'https://unpkg.com/three@0.152.0/build/three.module.js';
+import { ARButton } from 'https://unpkg.com/three@0.152.0/examples/jsm/webxr/ARButton.js';
+import { XRControllerModelFactory } from 'https://unpkg.com/three@0.152.0/examples/jsm/webxr/XRControllerModelFactory.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.152.0/examples/jsm/controls/OrbitControls.js';
+
+const container = document.getElementById('container');
+const startBtn = document.getElementById('enter-ar');
+const modeBtn = document.getElementById('modeBtn');
+const xrHandState = document.getElementById('xrHandState');
+const hint = document.getElementById('hint');
+
+const colorInput = document.getElementById('color');
+const sizeInput = document.getElementById('size');
+const pinchInput = document.getElementById('pinch');
+const undoBtn = document.getElementById('undoBtn');
+const clearBtn = document.getElementById('clearBtn');
+const snapBtn = document.getElementById('snapBtn');
+
+let renderer, scene, camera;
+let xrSession = null;
+let controller = null;
+let controllerGrip = null;
+let hitTestSource = null;
+let localReferenceSpace = null;
+let drawing = true; // mode: draw / pointer
+let drawingActive = false;
+let lastDrawPos = null;
+let strokeGroup; // group that contains all strokes (persisted)
+let strokes = []; // array of THREE.Line (for undo)
+let undoStack = [];
+let tempMarker = null; // small sphere where pointer is
+let handAvailable = false;
+let drawingHandId = null;
+
+const clock = new THREE.Clock();
+
+initThree();
+attachUI();
+
+function setHint(text) {
+  hint.innerHTML = text;
+}
+
+/* Initialize three.js and renderer configured for WebXR AR */
+function initThree() {
+  scene = new THREE.Scene();
+  scene.background = null; // show camera feed
+
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
+  container.appendChild(renderer.domElement);
+
+  // small ambient & directional light for 3D objects
+  const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+  scene.add(light);
+
+  // group for strokes
+  strokeGroup = new THREE.Group();
+  scene.add(strokeGroup);
+
+  // tiny pointer sphere
+  const sphereGeom = new THREE.SphereGeometry(0.005, 12, 12);
+  const sphereMat = new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x004422, opacity: 0.9, transparent: true });
+  tempMarker = new THREE.Mesh(sphereGeom, sphereMat);
+  tempMarker.visible = false;
+  scene.add(tempMarker);
+
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+/* UI wiring */
+function attachUI() {
+  startBtn.addEventListener('click', async () => {
+    if (navigator.xr && navigator.xr.isSessionSupported) {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user', // фронтальная камера
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
-          audio: false
-        });
-        video.srcObject = stream;
-        await video.play();
-      } catch (err) {
-        console.error("Ошибка доступа к камере:", err);
-        emotionText.textContent = "Не удалось получить доступ к камере";
-      }
-    }
-
-    async function loadModels() {
-      const modelUrl = "https://cdn.jsdelivr.net/npm/face-api.js/models";
-      await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
-      await faceapi.nets.faceLandmark68Net.loadFromUri(modelUrl);
-      await faceapi.nets.faceExpressionNet.loadFromUri(modelUrl);
-    }
-
-    function translateEmotion(emotion) {
-      const map = {
-        neutral: "Нейтральное",
-        happy: "Счастливое",
-        sad: "Грустное",
-        angry: "Злое",
-        fearful: "Испуганное",
-        disgusted: "Отвращение",
-        surprised: "Удивлённое"
-      };
-      return map[emotion] || emotion;
-    }
-
-    video.addEventListener('loadedmetadata', () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      async function detect() {
-        const detections = await faceapi.detectAllFaces(
-          video, new faceapi.TinyFaceDetectorOptions()
-        ).withFaceLandmarks().withFaceExpressions();
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        if (detections.length > 0) {
-          const best = detections[0];
-          const box = best.detection.box;
-
-          // Найдём эмоцию с макс. вероятностью
-          let maxEmotion = '';
-          let maxValue = 0;
-          for (let [emo, val] of Object.entries(best.expressions)) {
-            if (val > maxValue) {
-              maxValue = val;
-              maxEmotion = emo;
-            }
-          }
-
-          emotionText.textContent = `${translateEmotion(maxEmotion)} (${(maxValue * 100).toFixed(0)}%)`;
-
-          // Рисуем рамку
-          ctx.strokeStyle = "lime";
-          ctx.lineWidth = 3;
-          ctx.strokeRect(box.x, box.y, box.width, box.height);
-        } else {
-          emotionText.textContent = "Лицо не найдено";
+        // Check for 'immersive-ar' support
+        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+        if (!supported) {
+          setHint('WebXR immersive-ar not supported on this device/browser.');
+          return;
         }
-        requestAnimationFrame(detect);
+      } catch (e) {
+        console.warn('isSessionSupported failed', e);
       }
-      detect();
-    });
+      startAR();
+    } else {
+      setHint('WebXR not available. Use Chrome on Android with ARCore enabled.');
+    }
+  });
 
-    loadModels().then(startCamera);
-  </script>
+  modeBtn.addEventListener('click', () => {
+    drawing = !drawing;
+    modeBtn.textContent = drawing ? 'Mode: Draw' : 'Mode: Pointer';
+    setHint(drawing ? 'Pinch to draw in world. Move and strokes stay where drawn.' : 'Pointer mode: pinch to place anchors.');
+  });
+
+  undoBtn.addEventListener('click', () => {
+    if (strokes.length > 0) {
+      const s = strokes.pop();
+      undoStack.push(s);
+      strokeGroup.remove(s);
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    while(strokes.length) {
+      const s = strokes.pop(); strokeGroup.remove(s);
+    }
+  });
+
+  snapBtn.addEventListener('click', async () => {
+    // take screenshot of canvas
+    const dataUrl = renderer.domElement.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = dataUrl; a.download = 'airar.png'; a.click();
+  });
+}
+
+/* Start immersive AR session and set up hit-test & controllers */
+async function startAR() {
+  try {
+    const sessionInit = { requiredFeatures: ['hit-test','local-floor'], optionalFeatures: ['hand-tracking','anchors'] };
+    const session = await navigator.xr.requestSession('immersive-ar', sessionInit);
+    xrSession = session;
+    renderer.xr.setSession(session);
+    setHint('AR session started � move slowly to initialize tracking...');
+
+    // create reference space
+    localReferenceSpace = await xrSession.requestReferenceSpace('local-floor');
+
+    // setup hit test source (viewer)
+    const viewerSpace = await xrSession.requestReferenceSpace('viewer');
+    try {
+      hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+    } catch (e) {
+      console.warn('hit test source failed', e);
+      hitTestSource = null;
+    }
+
+    // controllers: one transient input source for hands (we'll track input sources)
+    controller = renderer.xr.getController(0);
+    controller.addEventListener('connected', function(ev) {
+      // if this is a hand, ev.data.targetRayMode === 'tracked-pointer' etc.
+    });
+    controller.addEventListener('disconnected', function(ev) {});
+    scene.add(controller);
+
+    // also controllerGrip for models (optional)
+    const controllerModelFactory = new XRControllerModelFactory();
+    controllerGrip = renderer.xr.getControllerGrip(0);
+    controllerGrip.add(new THREE.Group());
+    controllerGrip.addEventListener('connected', e => {});
+    scene.add(controllerGrip);
+
+    // start render loop
+    renderer.setAnimationLoop(onXRFrame);
+    // set UI
+    startBtn.style.display = 'none';
+  } catch (err) {
+    console.error('Failed to start AR', err);
+    setHint('Failed to start AR session: ' + (err && err.message ? err.message : err));
+  }
+}
+
+/* Utility: convert XRJointPose to THREE.Vector3 in local space */
+function poseToVec3(pose) {
+  return new THREE.Vector3(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+}
+
+/* Basic gesture detectors using XRHand joints.
+   We will:
+   - detect pinch between thumb tip and index tip (pinch drawing)
+   - detect thumbs up / down by comparing thumb direction and other fingers folded
+*/
+function detectGestures(xrFrame, inputSource, referenceSpace) {
+  // inputSource.hand is an XRHand if available
+  const hand = inputSource.hand;
+  if (!hand) return { pinch: false, thumbsUp: false, thumbsDown: false };
+
+  // get joint poses
+  const tipThumb = xrFrame.getJointPose(hand.get('thumb-tip'), referenceSpace);
+  const tipIndex = xrFrame.getJointPose(hand.get('index-finger-tip'), referenceSpace);
+  const mcpIndex = xrFrame.getJointPose(hand.get('index-finger-metacarpal') || hand.get('index-finger-phalanx-proximal'), referenceSpace);
+  const wrist = xrFrame.getJointPose(hand.get('wrist'), referenceSpace);
+  const tipMiddle = xrFrame.getJointPose(hand.get('middle-finger-tip'), referenceSpace);
+  const tipRing = xrFrame.getJointPose(hand.get('ring-finger-tip'), referenceSpace);
+  const tipLittle = xrFrame.getJointPose(hand.get('pinky-finger-tip'), referenceSpace);
+  // defensive checks
+  if (!tipThumb || !tipIndex || !wrist) return { pinch:false, thumbsUp:false, thumbsDown:false };
+
+  // pinch distance (in meters)
+  const pinchDist = tipThumb.transform.position ? Math.hypot(
+    tipThumb.transform.position.x - tipIndex.transform.position.x,
+    tipThumb.transform.position.y - tipIndex.transform.position.y,
+    tipThumb.transform.position.z - tipIndex.transform.position.z
+  ) : 999;
+
+  // thumb direction vector (thumb tip relative to wrist)
+  const thumbDir = new THREE.Vector3(
+    tipThumb.transform.position.x - wrist.transform.position.x,
+    tipThumb.transform.position.y - wrist.transform.position.y,
+    tipThumb.transform.position.z - wrist.transform.position.z
+  ).normalize();
+
+  // finger fold checks: measure distance between finger tips and wrist; folded fingers are near wrist
+  function fingerFolded(tipPose) {
+    if (!tipPose) return false;
+    const d = Math.hypot(
+      tipPose.transform.position.x - wrist.transform.position.x,
+      tipPose.transform.position.y - wrist.transform.position.y,
+      tipPose.transform.position.z - wrist.transform.position.z
+    );
+    return d < 0.07; // empirical: <7cm means folded toward palm
+  }
+  const foldedIndex = fingerFolded(tipIndex);
+  const foldedMiddle = fingerFolded(tipMiddle);
+  const foldedRing = fingerFolded(tipRing);
+  const foldedLittle = fingerFolded(tipLittle);
+
+  // thumbs up: thumb points up (thumbDir.y positive), other fingers folded
+  const thumbsUp = (thumbDir.y > 0.55) && foldedIndex && foldedMiddle && foldedRing && foldedLittle;
+  const thumbsDown = (thumbDir.y < -0.55) && foldedIndex && foldedMiddle && foldedRing && foldedLittle;
+
+  // pinch threshold (convert pinch slider value: 2..12 -> meters scaled roughly)
+  const pinchSetting = Number(pinchInput.value); // 2..12
+  const pinchThresh = pinchSetting / 100; // e.g. 0.04..0.12 meters
+
+  const pinch = pinchDist < pinchThresh;
+
+  return { pinch, thumbsUp, thumbsDown, pinchDist };
+}
+
+/* Helper to place a small 3D icon (thumb up/down) and animate it briefly */
+function showGestureFeedback(type, position) {
+  // create simple geometry: a small extruded plane with emoji texture
+  const size = 0.06;
+  const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0.0)';
+  ctx.fillRect(0,0,256,256);
+  ctx.font = '200px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = (type === 'up') ? '#7CFFB2' : '#FF8C8C';
+  ctx.fillText(type === 'up' ? '??' : '??', 128, 128);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.encoding = THREE.sRGBEncoding;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+  const spr = new THREE.Sprite(mat);
+  spr.scale.set(size, size, size);
+  spr.position.copy(position);
+  scene.add(spr);
+
+  // animate up + fade
+  const start = performance.now();
+  const duration = 1200;
+  function animate() {
+    const t = (performance.now() - start) / duration;
+    if (t >= 1) { scene.remove(spr); tex.dispose(); mat.dispose(); return; }
+    spr.position.y += 0.0008;
+    spr.material.opacity = 1 - t;
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+/* Create or extend a stroke line in world space:
+   - we store points in stroke.geometry (BufferGeometry with dynamic positions)
+   - new strokes are THREE.Line objects added to strokeGroup
+*/
+function startStroke(initialPos, color, size) {
+  const pts = [initialPos.clone()];
+  const geometry = new THREE.BufferGeometry().setFromPoints(pts);
+  const material = new THREE.LineBasicMaterial({ color: new THREE.Color(color), linewidth: Math.max(1, size/8), transparent:true, opacity:1 });
+  const line = new THREE.Line(geometry, material);
+  line.userData.points = pts;
+  line.userData.color = color;
+  line.userData.size = size;
+  strokeGroup.add(line);
+  strokes.push(line);
+  // keep lastDrawPos
+  lastDrawPos = initialPos.clone();
+  drawingActive = true;
+}
+
+function extendStroke(pos) {
+  if (!drawingActive || !strokes.length) return;
+  const line = strokes[strokes.length - 1];
+  const pts = line.userData.points;
+  // avoid adding many very close points
+  if (lastDrawPos && lastDrawPos.distanceTo(pos) < 0.005) return;
+  pts.push(pos.clone());
+  line.geometry.setFromPoints(pts);
+  lastDrawPos.copy(pos);
+}
+
+function endStroke() {
+  drawingActive = false;
+  lastDrawPos = null;
+}
+
+/* Hit test from screen center (or pointer) to get world position to attach strokes.
+   We'll use the XR hitTestSource if available; otherwise project a short ray from camera.
+*/
+function performHitTest(xrFrame, referenceSpace) {
+  if (!hitTestSource) return null;
+  // do a hit test using viewer pose origin
+  const hitResults = xrFrame.getHitTestResults(hitTestSource);
+  if (hitResults && hitResults.length > 0) {
+    const hit = hitResults[0];
+    const pose = hit.getPose(referenceSpace);
+    if (pose) {
+      return new THREE.Vector3(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+    }
+  }
+  return null;
+}
+
+/* Main per-frame XR rendering loop */
+function onXRFrame(time, xrFrame) {
+  // renderer state
+  const session = xrFrame.session;
+  const referenceSpace = localReferenceSpace;
+
+  // update XR hand availability status on each frame
+  let handFound = false;
+
+  // iterate inputSources and check for XRHand
+  for (const inputSource of session.inputSources) {
+    if (inputSource.hand) { handFound = true; break; }
+  }
+  handAvailable = handFound;
+  xrHandState.textContent = handAvailable ? 'available' : 'not-available';
+
+  // get viewer pose
+  const viewerPose = xrFrame.getViewerPose(referenceSpace);
+  if (viewerPose) {
+    // optionally derive pointer position using hitTest
+    // we will prefer hand joint position if drawing via hand
+  }
+
+  // Process input sources
+  let anyPinch = false;
+  for (const inputSource of session.inputSources) {
+    // If this inputSource supports hand joints, try to detect gestures & joint poses
+    if (inputSource.hand) {
+      const g = detectGestures(xrFrame, inputSource, referenceSpace);
+      // if thumb up or down, show feedback
+      if (g.thumbsUp) {
+        // find approximate position to show icon: tip of thumb transformed
+        const thumbPose = xrFrame.getJointPose(inputSource.hand.get('thumb-tip'), referenceSpace);
+        if (thumbPose) {
+          const pos = new THREE.Vector3(thumbPose.transform.position.x, thumbPose.transform.position.y, thumbPose.transform.position.z);
+          showGestureFeedback('up', pos);
+        }
+      } else if (g.thumbsDown) {
+        const thumbPose = xrFrame.getJointPose(inputSource.hand.get('thumb-tip'), referenceSpace);
+        if (thumbPose) {
+          const pos = new THREE.Vector3(thumbPose.transform.position.x, thumbPose.transform.position.y, thumbPose.transform.position.z);
+          showGestureFeedback('down', pos);
+        }
+      }
+
+      // pinch -> drawing
+      if (g.pinch) {
+        anyPinch = true;
+        // get a world position to draw: use index-finger-tip joint pose
+        const idxPose = xrFrame.getJointPose(inputSource.hand.get('index-finger-tip'), referenceSpace);
+        if (idxPose) {
+          const pos = new THREE.Vector3(idxPose.transform.position.x, idxPose.transform.position.y, idxPose.transform.position.z);
+          tempMarker.position.copy(pos);
+          tempMarker.visible = true;
+
+          // if just started pinch, start stroke (respect drawing mode)
+          if (!drawingActive) {
+            if (drawing) {
+              startStroke(pos, colorInput.value, Number(sizeInput.value));
+            } else {
+              // pointer mode: place a small anchor (tiny sphere) permanently
+              const anchor = new THREE.Mesh(new THREE.SphereGeometry(0.01,12,12), new THREE.MeshStandardMaterial({color:0xff44aa, emissive:0x440011}));
+              anchor.position.copy(pos);
+              scene.add(anchor);
+              // auto fade or keep - left for UX tuning
+            }
+          } else {
+            // extend stroke
+            if (drawing) extendStroke(pos);
+          }
+        }
+      } else {
+        // not pinching
+        if (drawingActive) {
+          endStroke();
+          tempMarker.visible = false;
+        } else {
+          // show temp marker following index finger even when not pinching
+          const idxPose = xrFrame.getJointPose(inputSource.hand.get('index-finger-tip'), referenceSpace);
+          if (idxPose) {
+            tempMarker.position.set(idxPose.transform.position.x, idxPose.transform.position.y, idxPose.transform.position.z);
+            tempMarker.visible = true;
+          } else {
+            tempMarker.visible = false;
+          }
+        }
+      }
+    } else {
+      // Non-hand input: maybe controller or tap. If inputSource.targetRayMode === 'gaze' or 'tracked-pointer', we could handle taps
+      // We'll skip here.
+    }
+  }
+
+  // If no hand and the user touches the screen (mobile), we can do hit-test on tap gestures (not implemented here)
+  if (!anyPinch && !handAvailable) {
+    tempMarker.visible = false;
+    // Optionally use viewer-centered hit test to show reticle
+    const pos = performHitTest(xrFrame, referenceSpace);
+    if (pos) {
+      tempMarker.position.copy(pos);
+      tempMarker.visible = true;
+    }
+  }
+
+  // render
+  renderer.render(scene, camera);
+}
+
+/* Graceful fallback and messages */
+if (!navigator.xr) {
+  setHint('WebXR not available. Use Chrome on Android (ARCore device).');
+  startBtn.disabled = true;
+} else {
+  // optional: test if 'immersive-ar' supported
+  navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+    if (!supported) {
+      setHint('immersive-ar not supported on this device/browser. You may still use a compatible Android device and Chrome.');
+    }
+  }).catch(e => {
+    console.warn('isSessionSupported error', e);
+  });
+}
+
+/* Deploy note:
+   - Put this file as index.html in a public GitHub repo and enable Pages (branch: main or gh-pages).
+   - Open the page on Chrome for Android with an ARCore device.
+*/
+
+</script>
 </body>
 </html>
