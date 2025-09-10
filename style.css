@@ -28,9 +28,20 @@ body {
 
 #effect {
   position: absolute;
-  bottom: 10%;
+  bottom: 15%;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 3rem;
-  display: none;
+  font-size: 3.5rem;
+  color: #00ffff;
+  text-shadow: 0 0 15px #00ffff, 0 0 25px #00ffff;
+  animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 5px #00ffff, 0 0 15px #00ffff;
+  }
+  to {
+    text-shadow: 0 0 25px #00ffff, 0 0 45px #00ffff;
+  }
 }
