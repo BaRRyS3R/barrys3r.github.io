@@ -1,24 +1,309 @@
-<!DOCTYPE html>
-<html lang="ru">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>AI Зеркало с Жестами</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- TensorFlow.js + MediaPipe Hands -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>n00body — Vibe‑Code Developer</title>
+
+  <!-- Monotype / techy monospace font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#05060a;
+      --glass: rgba(255,255,255,0.04);
+      --accent:#6afcff;
+      --accent2:#9b7cff;
+      --muted: rgba(255,255,255,0.06);
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg) 0%, #04040a 100%);font-family:'Roboto Mono', monospace;color:#eaf6ff;}
+
+    /* Full-screen WebGL canvas sits behind content */
+    #stage{position:fixed;inset:0;z-index:0}
+
+    .wrap{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px}
+
+    header{position:fixed;top:18px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:center;z-index:3}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,var(--accent) 0%, var(--accent2) 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 30px rgba(107,220,255,0.06), inset 0 -6px 18px rgba(255,255,255,0.02)}
+    .logo span{font-weight:700;color:#001;transform:translateY(-1px)}
+    nav a{color:rgba(234,246,255,0.7);text-decoration:none;padding:8px 12px;border-radius:6px;font-size:13px}
+    nav a:hover{background:rgba(255,255,255,0.03)}
+
+    /* Hero */
+    .hero{display:flex;gap:48px;align-items:center;max-width:1100px;width:100%}
+    .hero-left{flex:1}
+    .title{font-size:clamp(40px,10vw,96px);line-height:0.9;letter-spacing:-2px}
+    .title .glow{display:inline-block;padding:6px 12px;background:linear-gradient(90deg,rgba(106,252,255,0.12),rgba(155,124,255,0.06));border-radius:8px}
+    .tag{margin-top:12px;color:rgba(234,246,255,0.7);font-size:18px}
+
+    .cta{margin-top:22px;display:flex;gap:12px;align-items:center}
+    .btn{background:linear-gradient(90deg,var(--accent) 0%, var(--accent2) 100%);color:#001;border:none;padding:12px 16px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 8px 30px rgba(155,124,255,0.12);}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;color:rgba(234,246,255,0.85);cursor:pointer}
+
+    /* Projects */
+    .projects{margin-top:36px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:18px;border-radius:14px;border:1px solid var(--muted);backdrop-filter: blur(6px)}
+    .project-list{display:flex;gap:14px}
+    .project{flex:1;padding:16px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+    .project h3{margin:0 0 8px 0;font-size:18px}
+    .project p{margin:0;color:rgba(234,246,255,0.66);font-size:13px}
+
+    footer{position:fixed;bottom:18px;left:18px;z-index:3;color:rgba(255,255,255,0.45);font-size:12px}
+
+    /* Floating code snippets (visual garnish) */
+    .floating-code{position:fixed;z-index:1;pointer-events:none;font-size:12px;opacity:0.14;mix-blend-mode:screen;white-space:nowrap}
+    .float-1{top:10%;left:6%;transform:translate3d(0,0,0)}
+    .float-2{bottom:12%;right:8%}
+    .float-3{top:30%;right:22%}
+
+    /* small screens */
+    @media (max-width:780px){
+      .hero{flex-direction:column;align-items:flex-start}
+      .project-list{flex-direction:column}
+      header{padding:8px}
+    }
+
+    /* subtle animated glints */
+    .holo{position:relative;overflow:hidden}
+    .holo::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);transform:translateX(-110%);animation:glint 6s linear infinite}
+    @keyframes glint{to{transform:translateX(110%)}}
+
+  </style>
 </head>
 <body>
-  <div id="mirror-container">
-    <video id="camera" autoplay playsinline></video>
-    <canvas id="overlay"></canvas>
-    <div id="effect"></div>
-  </div>
-  <script src="script.js"></script>
+
+  <canvas id="stage"></canvas>
+
+  <header>
+    <div class="brand">
+      <div class="logo"><span>n0</span></div>
+      <div style="line-height:1">
+        <div style="font-weight:700">n00body</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.35)">Vibe‑Code Developer</div>
+      </div>
+    </div>
+    <nav>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-left">
+        <h1 class="title holo"><span class="glow">n00body</span></h1>
+        <div class="tag">Vibe‑Code Developer — crafting tactile digital motion, UI-as-hologram, and joyful physics.</div>
+
+        <div class="cta">
+          <button class="btn" onclick="scrollToSection('projects')">View Projects</button>
+          <button class="ghost" onclick="alert('Email: hello@n00body.dev — placeholder')">Say Hello</button>
+        </div>
+
+        <div id="projects" class="projects" aria-labelledby="projects">
+          <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:8px">Selected Works</div>
+          <div class="project-list">
+            <article class="project">
+              <h3>Circusle</h3>
+              <p>A playful physics-driven game prototype mixing juggling mechanics and glitch aesthetics. Built with love for low-latency feel.</p>
+            </article>
+            <article class="project">
+              <h3>Facets</h3>
+              <p>A modular UI / design system that generates reflective, holographic components and live themes for creative apps.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: small info card + interactive preview -->
+      <div style="width:360px;max-width:40vw;min-width:260px">
+        <div class="holo" style="padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));backdrop-filter:blur(8px)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#0ff 0%,#9b7cff 100%);display:flex;align-items:center;justify-content:center;font-weight:700;color:#001">V</div>
+            <div>
+              <div style="font-weight:700">Live Preview</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.6)">Click & drag inside the canvas to push particles.</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;font-size:13px;color:rgba(255,255,255,0.66)">Tech: HTML • CSS • JS • WebGL</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="floating-code float-1">const vibe = {code: 'fluid', tempo: 120}</div>
+  <div class="floating-code float-2">&lt;render /&gt; → hologram()</div>
+  <div class="floating-code float-3">for(let i=0;i&lt;99;i++){spawnParticle(i)}</div>
+
+  <footer id="contact">© <span id="year"></span> n00body • Vibe‑Code</footer>
+
+  <!-- Three.js from CDN (lightweight entry) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+
+  <script>
+    // small helpers
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+
+    // --- WebGL particle field with simple physics + mouse interaction ---
+    const canvas = document.getElementById('stage');
+    const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.setSize(innerWidth, innerHeight);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, innerWidth/innerHeight, 0.1, 2000);
+    camera.position.z = 300;
+
+    // particle geometry
+    const particleCount = 1200;
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = new Float32Array(particleCount * 3);
+
+    for(let i=0;i<particleCount;i++){
+      const i3 = i*3;
+      positions[i3] = (Math.random()-0.5) * 1200; // x
+      positions[i3+1] = (Math.random()-0.5) * 600; // y
+      positions[i3+2] = (Math.random()-0.5) * 800; // z
+
+      velocities[i3] = (Math.random()-0.5)*0.2;
+      velocities[i3+1] = (Math.random()-0.5)*0.2;
+      velocities[i3+2] = (Math.random()-0.5)*0.2;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
+
+    const material = new THREE.PointsMaterial({size:2.6, transparent:true, opacity:0.9, depthWrite:false});
+    // gradient-ish texture via programmatic alpha map
+    const sprite = document.createElement('canvas');
+    sprite.width = 64; sprite.height = 64;
+    const ctx = sprite.getContext('2d');
+    const g = ctx.createRadialGradient(32,32,4,32,32,32);
+    g.addColorStop(0,'rgba(170,255,255,1)');
+    g.addColorStop(0.6,'rgba(120,120,255,0.6)');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+
+    const tex = new THREE.CanvasTexture(sprite);
+    material.map = tex;
+    material.color = new THREE.Color(0x88f6ff);
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+
+    // a faint plane to produce parallax hologram lines
+    const lineGeo = new THREE.BufferGeometry();
+    const lineCount = 300;
+    const linePositions = new Float32Array(lineCount*6);
+    for(let i=0;i<lineCount;i++){
+      const x = (Math.random()-0.5)*1400;
+      const y = (Math.random()-0.5)*600;
+      linePositions[i*6] = x; linePositions[i*6+1] = y; linePositions[i*6+2] = -50 + Math.random()*200;
+      linePositions[i*6+3] = x + (Math.random()*40-20); linePositions[i*6+4] = y + (Math.random()*20-10); linePositions[i*6+5] = -50 + Math.random()*300;
+    }
+    lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions,3));
+    const lineMat = new THREE.LineBasicMaterial({transparent:true,opacity:0.06});
+    const lines = new THREE.LineSegments(lineGeo, lineMat);
+    scene.add(lines);
+
+    // interaction
+    let mouse = new THREE.Vector2(-9999,-9999);
+    let lastMouse = {x:0,y:0};
+    let isDown = false;
+
+    function onPointerMove(e){
+      const x = (e.clientX / innerWidth) * 2 - 1;
+      const y = -(e.clientY / innerHeight) * 2 + 1;
+      mouse.set(x,y);
+      lastMouse.x = e.clientX; lastMouse.y = e.clientY;
+    }
+    function onPointerDown(){isDown = true}
+    function onPointerUp(){isDown = false}
+
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerup', onPointerUp);
+
+    // animation
+    function animate(){
+      requestAnimationFrame(animate);
+
+      // simple flight physics
+      const pos = geometry.attributes.position.array;
+      for(let i=0;i<particleCount;i++){
+        const i3 = i*3;
+        // gentle drift
+        velocities[i3] *= 0.995; velocities[i3+1] *= 0.995; velocities[i3+2] *= 0.995;
+        pos[i3] += velocities[i3]; pos[i3+1] += velocities[i3+1]; pos[i3+2] += velocities[i3+2];
+
+        // boundary wrap
+        if(pos[i3] > 700) pos[i3] = -700;
+        if(pos[i3] < -700) pos[i3] = 700;
+        if(pos[i3+1] > 400) pos[i3+1] = -400;
+        if(pos[i3+1] < -400) pos[i3+1] = 400;
+        if(pos[i3+2] > 800) pos[i3+2] = -800;
+        if(pos[i3+2] < -800) pos[i3+2] = 800;
+
+        // mouse repulsion
+        if(lastMouse.x){
+          // transform mouse to world-ish
+          const mx = (lastMouse.x - innerWidth/2);
+          const my = (innerHeight/2 - lastMouse.y);
+          const dx = pos[i3] - mx*0.7;
+          const dy = pos[i3+1] - my*0.7;
+          const dist2 = dx*dx + dy*dy + 20;
+          const force = (isDown ? 1800 : 600) / dist2;
+          velocities[i3] += dx * force * 0.00002;
+          velocities[i3+1] += dy * force * 0.00002;
+        }
+      }
+      geometry.attributes.position.needsUpdate = true;
+
+      // slow camera float
+      const time = Date.now()*0.0003;
+      camera.position.x = Math.sin(time*0.4) * 20;
+      camera.position.y = Math.sin(time*0.17) * 10;
+      camera.lookAt(0,0,0);
+
+      renderer.render(scene,camera);
+    }
+    animate();
+
+    // resize handler
+    window.addEventListener('resize', ()=>{
+      renderer.setSize(innerWidth, innerHeight);
+      camera.aspect = innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    // --- Subtle floating DOM code animation (parallax) ---
+    const floats = document.querySelectorAll('.floating-code');
+    function updateFloats(){
+      floats.forEach((el, idx) => {
+        const speed = 0.4 + idx*0.12;
+        const x = Math.sin(Date.now()*0.0003*speed + idx) * 18;
+        const y = Math.cos(Date.now()*0.00017*speed + idx) * 10;
+        el.style.transform = `translate3d(${x}px,${y}px,0)`;
+      });
+      requestAnimationFrame(updateFloats);
+    }
+    updateFloats();
+
+    // small performance guard
+    let lastFrame = performance.now();
+    function perfTick(){
+      const now = performance.now();
+      if(now - lastFrame > 1000/30){ // drop particles if slow
+        // no-op placeholder: later you might reduce particleCount
+      }
+      lastFrame = now; requestAnimationFrame(perfTick);
+    }
+    perfTick();
+
+  </script>
 </body>
 </html>
