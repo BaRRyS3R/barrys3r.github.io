@@ -3,1429 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>n00body - Professional Procrastinator & Part-Time Wizard</title>
+    <title>n00body | Vibe-Code Developer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
-        
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #141414;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-tertiary: #606060;
+            --border-color: #2a2a2a;
+            --hover-bg: #1f1f1f;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
-        :root {
-            --bg: #000000;
-            --fg: #ffffff;
-            --dim: #666666;
-            --accent: #333333;
-            --border: #1a1a1a;
-        }
-        
+
         body {
             font-family: 'JetBrains Mono', monospace;
-            background: var(--bg);
-            color: var(--fg);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
-            font-weight: 300;
             overflow-x: hidden;
         }
 
-        /* Hidden easter egg */
-        .konami-mode {
-            animation: rainbow 2s infinite !important;
-        }
-
-        @keyframes rainbow {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
-
-        /* Scanning lines effect */
-        .scanlines {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(255, 255, 255, 0.002) 2px,
-                rgba(255, 255, 255, 0.002) 4px
-            );
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        /* Sarcastic status bar */
-        .status-overlay {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            font-size: 0.7rem;
-            color: var(--dim);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 1001;
-            text-align: right;
-            max-width: 200px;
-        }
-
-        .status-overlay.show {
-            opacity: 1;
-        }
-
-        .mood-indicator {
-            margin-bottom: 0.3rem;
-            cursor: pointer;
-        }
-
-        .mood-indicator:hover {
-            color: var(--fg);
-        }
-        
-        .boot-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            animation: fadeOut 1s ease-out 3s forwards;
-        }
-
-        .boot-screen::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            animation: bootScan 2s ease-in-out 1s;
-        }
-        
-        .boot-text {
-            font-size: 0.9rem;
-            color: var(--dim);
-            margin-bottom: 0.5rem;
-            opacity: 0;
-            position: relative;
-        }
-
-        .boot-text::after {
-            content: '';
-            position: absolute;
-            right: -10px;
-            top: 0;
-            width: 8px;
-            height: 100%;
-            background: var(--fg);
-            opacity: 0;
-        }
-        
-        .boot-text.active {
-            animation: typeIn 0.5s ease-out forwards;
-        }
-
-        .boot-text.active::after {
-            animation: blink 0.8s infinite 0.5s;
-        }
-        
-        .progress-bar {
-            width: 300px;
-            height: 2px;
-            background: var(--border);
-            margin-top: 2rem;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: var(--fg);
-            width: 0%;
-            animation: progress 2.5s ease-out 0.5s forwards;
-        }
-        
         .container {
-            min-height: 100vh;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            align-items: center;
-            gap: 4rem;
-            opacity: 0;
-            animation: containerFadeIn 1s ease-out 4s forwards;
-            position: relative;
+            padding: 0 2rem;
         }
 
-        .container::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 1px;
-            height: 50%;
-            background: linear-gradient(transparent, var(--border), transparent);
-            transform: translate(-50%, -50%);
-            opacity: 0;
-            animation: centerLineFade 1s ease-out 5s forwards;
-        }
-        
-        .left-panel {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            position: relative;
-        }
-
-        .left-panel::before {
-            content: '';
-            position: absolute;
+        /* Code Background Elements */
+        .code-bg {
+            position: fixed;
             top: 0;
-            left: -1rem;
-            width: 1px;
-            height: 0;
-            background: linear-gradient(var(--fg), transparent);
-            animation: borderGrow 1s ease-out 6s forwards;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.05;
+            font-size: 0.75rem;
+            line-height: 1.8;
+            overflow: hidden;
         }
-        
-        .right-panel {
+
+        .code-line {
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding-left: 2rem;
-            border-left: 1px solid var(--border);
             position: relative;
+            z-index: 1;
         }
 
-        .right-panel::before {
-            content: '';
-            position: absolute;
-            left: -1px;
-            top: -50px;
-            width: 1px;
-            height: 0;
-            background: var(--fg);
-            animation: verticalScan 2s ease-out 6s forwards;
-        }
-
-        .ascii-header {
-            font-size: 0.6rem;
-            color: var(--dim);
+        .name-container {
             margin-bottom: 2rem;
-            white-space: pre;
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 4.2s forwards;
-            transition: all 0.3s ease;
-            cursor: help;
-        }
-
-        .ascii-header:hover {
-            color: var(--fg);
-        }
-        
-        .terminal-prompt {
-            font-size: 0.8rem;
-            color: var(--dim);
-            margin-bottom: 1rem;
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 4.5s forwards;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .terminal-prompt::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: -2px;
-            width: 0;
-            height: 1px;
-            background: var(--fg);
-            animation: underlineGrow 1s ease-out 5.3s forwards;
-        }
-
-        .terminal-prompt:hover {
-            color: var(--fg);
-        }
-        
-        .name-section {
-            margin-bottom: 4rem;
-            position: relative;
-        }
-
-        .name-section:hover .alias {
-            transform: scale(1.02);
-        }
-        
-        .alias {
-            font-size: 4rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 1rem;
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 5s forwards;
-            position: relative;
-            transition: all 0.5s ease;
-            cursor: pointer;
-        }
-        
-        .alias::after {
-            content: '_';
-            opacity: 0;
-            animation: blink 1s infinite 5.8s;
-        }
-
-        .alias:hover::after {
-            content: '🤡';
-            animation: none;
-            opacity: 1;
-        }
-        
-        .subtitle {
-            font-size: 1rem;
-            color: var(--dim);
-            font-weight: 300;
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 5.2s forwards;
         }
 
         .code-comment {
-            font-size: 0.8rem;
-            color: var(--accent);
-            margin-bottom: 0.5rem;
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 5.4s forwards;
-        }
-
-        .vibe-indicator {
-            font-size: 0.7rem;
-            color: var(--dim);
-            margin-top: 0.5rem;
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 5.6s forwards;
-            cursor: pointer;
-        }
-
-        .vibe-indicator::before {
-            content: '🎵 ';
-            animation: pulse 2s infinite;
-        }
-
-        .vibe-indicator:hover {
-            color: var(--fg);
-        }
-        
-        .info-grid {
-            display: grid;
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-        
-        .info-block {
-            opacity: 0;
-            animation: slideUp 0.8s ease-out forwards;
-            transform: translateY(20px);
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .info-block:hover {
-            transform: translateY(-2px) translateX(5px);
-            background: rgba(255, 255, 255, 0.01);
-            padding: 1rem;
-            margin: -1rem;
-        }
-        
-        .info-block:nth-child(1) { animation-delay: 5.8s; }
-        .info-block:nth-child(2) { animation-delay: 6.0s; }
-        .info-block:nth-child(3) { animation-delay: 6.2s; }
-        .info-block:nth-child(4) { animation-delay: 6.4s; }
-        .info-block:nth-child(5) { animation-delay: 6.6s; }
-        .info-block:nth-child(6) { animation-delay: 6.8s; }
-        
-        .info-label {
-            font-size: 0.75rem;
-            color: var(--dim);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            position: relative;
-        }
-        
-        .info-label::before {
-            content: '> ';
-            color: var(--fg);
-            opacity: 0;
-            animation: fadeIn 0.3s ease-out forwards;
-            animation-delay: inherit;
-        }
-        
-        .info-value {
-            font-size: 1rem;
-            font-weight: 400;
-        }
-        
-        .info-value a {
-            color: var(--fg);
-            text-decoration: none;
-            border-bottom: 1px solid transparent;
-            transition: all 0.3s ease;
-            position: relative;
-            padding-right: 1.5rem;
-        }
-        
-        .info-value a::after {
-            content: '↗';
-            position: absolute;
-            right: 0;
-            top: 0;
-            font-size: 0.8rem;
-            opacity: 0;
-            transform: translate(-5px, 5px);
-            transition: all 0.3s ease;
-        }
-        
-        .info-value a:hover {
-            border-bottom-color: var(--fg);
-        }
-        
-        .info-value a:hover::after {
-            opacity: 1;
-            transform: translate(0, 0);
-        }
-
-        .code-block {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            padding: 1rem;
-            margin-top: 0.5rem;
-            font-size: 0.85rem;
-            border-radius: 2px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .code-block::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 0;
-            height: 0;
-            border-top: 10px solid var(--border);
-            border-left: 10px solid transparent;
-        }
-
-        .code-syntax {
-            color: var(--dim);
-        }
-
-        .code-string {
-            color: #8be9fd;
-        }
-
-        .code-keyword {
-            color: var(--fg);
-            font-weight: 500;
-        }
-
-        .meme-text {
-            font-size: 0.7rem;
-            color: var(--accent);
-            font-style: italic;
-            margin-top: 0.3rem;
-            cursor: pointer;
-        }
-
-        .meme-text:hover {
-            color: var(--dim);
-        }
-
-        .personal-note {
-            font-size: 0.65rem;
-            color: var(--accent);
-            margin-top: 0.2rem;
-            opacity: 0.7;
-        }
-        
-        .stack-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .stack-item {
-            padding: 0.5rem 0;
+            color: var(--text-tertiary);
             font-size: 0.9rem;
-            border-bottom: 1px solid var(--border);
-            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .name {
+            font-size: 4rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
             position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        
-        .stack-item::before {
-            content: '';
-            position: absolute;
-            left: -100%;
-            bottom: 0;
-            width: 100%;
-            height: 1px;
-            background: var(--fg);
-            transition: left 0.3s ease;
         }
 
-        .stack-item::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            width: 4px;
-            height: 4px;
-            background: var(--fg);
-            border-radius: 50%;
-            transform: translate(10px, -50%);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-        
-        .stack-item:hover {
-            color: var(--fg);
-            transform: translateX(4px);
-        }
-        
-        .stack-item:hover::before {
-            left: 0;
+        .name::before {
+            content: 'const ';
+            color: var(--text-tertiary);
+            font-size: 1.5rem;
         }
 
-        .stack-item:hover::after {
-            opacity: 1;
-            transform: translate(0, -50%);
-        }
-        
-        .projects-section {
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 7s forwards;
+        .name::after {
+            content: ' = "Alexander";';
+            color: var(--text-tertiary);
+            font-size: 1.5rem;
         }
 
-        .ascii-projects {
-            font-size: 0.6rem;
-            color: var(--dim);
-            margin-bottom: 1.5rem;
-            white-space: pre;
-            opacity: 0;
-            animation: slideUp 0.8s ease-out 7.2s forwards;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .typing-container {
+            min-height: 120px;
         }
 
-        .ascii-projects:hover {
-            color: var(--fg);
-        }
-        
-        .section-title {
-            font-size: 0.75rem;
-            color: var(--dim);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+        .bio {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
             margin-bottom: 2rem;
-            font-weight: 500;
-            position: relative;
-        }
-        
-        .section-title::before {
-            content: '$ ls -la ~/totally-not-procrastination/';
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--fg);
-            font-size: 0.8rem;
-            opacity: 0;
-            animation: typeCommand 1s steps(35) 7.4s forwards;
-        }
-        
-        .project {
-            margin-bottom: 2.5rem;
-            padding-bottom: 2.5rem;
-            border-bottom: 1px solid var(--border);
-            transition: all 0.3s ease;
-            position: relative;
-            opacity: 0;
-            animation: projectFadeIn 0.6s ease-out forwards;
-            overflow: hidden;
-        }
-        
-        .project:nth-child(3) { animation-delay: 7.6s; }
-        .project:nth-child(4) { animation-delay: 7.8s; }
-        
-        .project:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        .project::before {
-            content: '';
-            position: absolute;
-            left: -2rem;
-            top: 0;
-            width: 1px;
-            height: 100%;
-            background: var(--fg);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .project:hover::before {
-            opacity: 1;
-        }
-        
-        .project:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.01);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        
-        .project-name {
-            font-size: 1.25rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-        
-        .project-name a {
-            color: var(--fg);
-            text-decoration: none;
-            position: relative;
-            transition: all 0.3s ease;
-            padding-right: 2rem;
-        }
-        
-        .project-name a::before {
-            content: './';
-            position: absolute;
-            left: -1.5rem;
-            color: var(--dim);
-            opacity: 0;
-            transition: all 0.3s ease;
-        }
-        
-        .project-name a::after {
-            content: '→';
-            position: absolute;
-            right: 0;
-            top: 0;
-            opacity: 0;
-            transform: translateX(-10px);
-            transition: all 0.3s ease;
-        }
-        
-        .project-name a:hover::before,
-        .project-name a:hover::after {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        
-        .project-desc {
-            color: var(--dim);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-            line-height: 1.5;
-            position: relative;
-        }
-        
-        .project-desc::before {
-            content: '// ';
-            color: var(--accent);
-        }
-        
-        .project-tech {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.75rem;
-            color: var(--dim);
-            flex-wrap: wrap;
-        }
-        
-        .tech-item {
-            padding: 0.25rem 0.5rem;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        
-        .tech-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            transition: left 0.3s ease;
-        }
-        
-        .tech-item:hover::before {
-            left: 0;
-        }
-        
-        .tech-item:hover {
-            border-color: var(--fg);
-            color: var(--fg);
-            transform: translateY(-1px);
+            line-height: 1.8;
         }
 
-        /* Hidden debug panel */
-        .debug-panel {
-            position: fixed;
-            bottom: -250px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 500px;
-            height: 200px;
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid var(--border);
-            padding: 1rem;
-            font-size: 0.7rem;
-            color: var(--dim);
-            transition: bottom 0.5s ease;
-            z-index: 1002;
-            overflow-y: auto;
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background-color: var(--text-primary);
+            margin-left: 2px;
+            animation: blink 1s infinite;
         }
 
-        .debug-panel.show {
-            bottom: 1rem;
-        }
-
-        .debug-title {
-            color: var(--fg);
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-
-        /* Secret facts overlay */
-        .facts-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid var(--border);
-            padding: 2rem;
-            width: 80%;
-            max-width: 500px;
-            font-size: 0.8rem;
-            color: var(--dim);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-            z-index: 1003;
-        }
-
-        .facts-overlay.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 0.5rem;
-            right: 1rem;
-            cursor: pointer;
-            color: var(--fg);
-        }
-        
-        @keyframes fadeOut {
-            to { opacity: 0; visibility: hidden; }
-        }
-
-        @keyframes bootScan {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        @keyframes centerLineFade {
-            from { opacity: 0; height: 0; }
-            to { opacity: 0.3; height: 50%; }
-        }
-
-        @keyframes borderGrow {
-            from { height: 0; }
-            to { height: 200px; }
-        }
-
-        @keyframes verticalScan {
-            0% { height: 0; top: -50px; }
-            50% { height: 150px; top: -50px; }
-            100% { height: 0; top: 100px; }
-        }
-
-        @keyframes underlineGrow {
-            from { width: 0; }
-            to { width: 100%; }
-        }
-
-        @keyframes typeCommand {
-            from { width: 0; opacity: 1; }
-            to { width: 100%; opacity: 1; }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes containerFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes typeIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        
-        @keyframes progress {
-            from { width: 0%; }
-            to { width: 100%; }
-        }
-        
-        @keyframes slideUp {
-            from { 
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes projectFadeIn {
-            from { 
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to { 
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
         @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0; }
         }
-        
+
+        .meta-info {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .meta-item {
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+        }
+
+        .meta-item span {
+            color: var(--text-secondary);
+        }
+
+        /* Skills Section */
+        .skills {
+            margin: 4rem 0;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .skills.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .skills-title {
+            font-size: 1.2rem;
+            color: var(--text-tertiary);
+            margin-bottom: 1rem;
+        }
+
+        .skills-list {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .skill-tag {
+            background-color: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+
+        .skill-tag:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--text-tertiary);
+            transform: translateY(-2px);
+        }
+
+        /* Projects Section */
+        .section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        .section-title::before {
+            content: '// ';
+            color: var(--text-tertiary);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .projects-grid.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .project-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--text-primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--text-tertiary);
+        }
+
+        .project-card:hover::before {
+            opacity: 0.3;
+        }
+
+        .project-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .project-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+            transition: color 0.3s ease;
+        }
+
+        .project-link:hover {
+            color: var(--text-primary);
+        }
+
+        .project-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .tech-stack {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tech-tag {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            padding: 0.25rem 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+        }
+
+        /* Contact Section */
+        .contact {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            text-align: center;
+            padding: 4rem 0 6rem 0;
+        }
+
+        .contact.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .contact-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 1rem 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            background-color: var(--bg-secondary);
+        }
+
+        .contact-link:hover {
+            color: var(--text-primary);
+            border-color: var(--text-tertiary);
+            transform: translateY(-3px);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Code Snippet Floating Elements */
+        .code-snippet {
+            position: fixed;
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            opacity: 0.1;
+            pointer-events: none;
+            z-index: 0;
+            line-height: 1.5;
+        }
+
         @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-                padding: 2rem 1rem;
-            }
-            
-            .right-panel {
-                padding-left: 0;
-                border-left: none;
-                border-top: 1px solid var(--border);
-                padding-top: 2rem;
-            }
-            
-            .alias {
+            .name {
                 font-size: 2.5rem;
             }
-            
-            .stack-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .progress-bar {
-                width: 250px;
+
+            .name::before,
+            .name::after {
+                font-size: 1rem;
             }
 
-            .container::before {
-                display: none;
-            }
-
-            .left-panel::before,
-            .right-panel::before {
-                display: none;
-            }
-
-            .ascii-header,
-            .ascii-projects {
-                font-size: 0.5rem;
-            }
-
-            .debug-panel,
-            .facts-overlay {
-                width: 90%;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .alias {
+            .section-title {
                 font-size: 2rem;
             }
-            
-            .progress-bar {
-                width: 200px;
-            }
 
-            .project-tech {
-                gap: 0.5rem;
-            }
-
-            .ascii-header,
-            .ascii-projects {
-                font-size: 0.45rem;
+            .projects-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="scanlines"></div>
-    
-    <div class="status-overlay" id="statusOverlay">
-        <div class="mood-indicator" onclick="toggleMood()">😴 Mood: Caffeinated & Sarcastic</div>
-        <div>☕ Coffee: Dependency injected</div>
-        <div>🎵 Playing: "Another One Bites the Debug"</div>
-        <div>💻 Status: Pretending to be productive</div>
-        <div style="margin-top: 0.5rem; font-size: 0.6rem;">Last seen: Debugging CSS at 3AM</div>
-    </div>
-    
-    <div class="boot-screen">
-        <div class="boot-text" id="boot-1">npm install life@33 --save-dev (still loading...)</div>
-        <div class="boot-text" id="boot-2">webpack bundling existential-crisis.js...</div>
-        <div class="boot-text" id="boot-3">mounting React.LifeComponent() with props.sarcasm=true</div>
-        <div class="boot-text" id="boot-4">compiling JSX templates (and crushing dreams)</div>
-        <div class="boot-text" id="boot-5">✅ Impostor syndrome initialized successfully! 🎭</div>
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
-        </div>
-    </div>
-    
-    <div class="container">
-        <div class="left-panel">
-            <div class="ascii-header" onclick="showPersonalFacts()" title="Click for uncomfortable personal truths">
-┌─────────────────────────────────────┐
-│ while(procrastinating) {            │
-│   watchYoutube();                   │
-│   drinkCoffee();                    │
-│   pretendToCode();                  │
-│   // TODO: Actually code something │
-│ } // Been running for 15 years 🤡  │
-└─────────────────────────────────────┘
+    <!-- Background Code Elements -->
+    <div class="code-bg" id="codeBg"></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="name-container">
+                <div class="code-comment">// username.toLowerCase()</div>
+                <h1 class="name">n00body</h1>
             </div>
             
-            <div class="terminal-prompt" onclick="showSarcasticCommands()">procrastinator@reality-escape:~$</div>
-            
-            <div class="name-section">
-                <div class="alias" onclick="roastMyself()">n00body</div>
-                <div class="code-comment">// Self-proclaimed "senior" developer with junior insecurities</div>
-                <div class="subtitle">Professional bug creator & occasional problem solver</div>
-                <div class="vibe-indicator" onclick="changeVibeStatus()">Currently: Questioning life choices & coding standards</div>
+            <div class="typing-container">
+                <p class="bio" id="typingText"></p>
             </div>
-            
-            <div class="info-grid">
-                <div class="info-block">
-                    <div class="info-label">const whoAmI = () => existentialCrisis</div>
-                    <div class="info-value">
-                        <div class="code-block">
-                            <span class="code-keyword">name</span><span class="code-syntax">:</span> <span class="code-string">"Aleksandr"</span><span class="code-syntax">,</span> <span class="code-syntax">// Not Alex, please</span><br>
-                            <span class="code-keyword">age</span><span class="code-syntax">:</span> <span class="code-string">33</span><span class="code-syntax">,</span> <span class="code-syntax">// Christ's age when he died, I just debug</span><br>
-                            <span class="code-keyword">location</span><span class="code-syntax">:</span> <span class="code-string">"Matrix.simulation"</span><span class="code-syntax">,</span><br>
-                            <span class="code-keyword">reality</span><span class="code-syntax">:</span> <span class="code-string">"questionable"</span><span class="code-syntax">,</span><br>
-                            <span class="code-keyword">contact</span><span class="code-syntax">:</span> <a href="https://t.me/mrmrcrowley" class="code-string">"@mrmrcrowley"</a>
-                            <div class="meme-text" onclick="randomRoast()">// Warning: May contain traces of competence</div>
-                            <div class="personal-note">* Slides into DMs with code reviews</div>
-                        </div>
-                    </div>
+
+            <div class="meta-info">
+                <div class="meta-item">
+                    <span>age:</span> 33
                 </div>
-                
-                <div class="info-block">
-                    <div class="info-label">import * as Tools from './definitely-professional'</div>
-                    <div class="info-value">
-                        <div class="stack-grid">
-                            <div class="stack-item" onclick="roastTool('pen')">Pen</div>
-                            <div class="stack-item" onclick="roastTool('pencil')">Pencil</div>
-                            <div class="stack-item" onclick="roastTool('brain')">Brain</div>
-                            <div class="stack-item" onclick="roastTool('claude')">Claude</div>
-                        </div>
-                        <div class="meme-text">// Yes, I still use analog tools. Fight me. ✏️</div>
-                        <div class="personal-note">* Brain.exe occasionally stops responding</div>
-                    </div>
+                <div class="meta-item">
+                    <span>location:</span> { lat: '??', lng: '??' }
                 </div>
-                
-                <div class="info-block">
-                    <div class="info-label">export const LifePhilosophy = () => sarcasm</div>
-                    <div class="info-value">
-                        <div class="code-block">
-                            <span class="code-syntax">/* Aleksandr's Life Manifesto (version 33.0.1):</span><br>
-                            &nbsp;&nbsp;<span class="code-syntax">1. Coffee.isRequired() = true</span><br>
-                            &nbsp;&nbsp;<span class="code-syntax">2. Simplicity > Complexity (but who listens?)</span><br>
-                            &nbsp;&nbsp;<span class="code-syntax">3. Clean code is a myth</span><br>
-                            &nbsp;&nbsp;<span class="code-syntax">4. Documentation is for future me to hate past me</span><br>
-                            &nbsp;&nbsp;<span class="code-syntax">5. Every bug is a feature in disguise */</span><br>
-                            <div class="meme-text" onclick="philosophyJoke()">// Wisdom acquired through suffering and Stack Overflow 📚</div>
-                        </div>
+                <div class="meta-item">
+                    <span>status:</span> 'vibe-coding'
+                </div>
+            </div>
+
+            <div class="skills">
+                <div class="skills-title">const stack = [</div>
+                <div class="skills-list">
+                    <div class="skill-tag">'Hands'</div>
+                    <div class="skill-tag">'Brain'</div>
+                    <div class="skill-tag">'Claude'</div>
+                    <div class="skill-tag">'ChatGPT'</div>
+                    <div class="skill-tag">'Binge-watching series'</div>
+                </div>
+                <div class="skills-title">];</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Projects</h2>
+            <div class="projects-grid">
+                <div class="project-card">
+                    <h3 class="project-name">Circusle</h3>
+                    <a href="https://t.me/circusle" target="_blank" class="project-link">→ t.me/circusle</a>
+                    <div class="project-status">Beta Testing</div>
+                    <p class="project-description">
+                        A reaction-based game where your reflexes meet the chaos of the circus.
+                    </p>
+                    <div class="tech-stack">
+                        <span class="tech-tag">React</span>
+                        <span class="tech-tag">Next.js</span>
+                        <span class="tech-tag">Tailwind</span>
                     </div>
                 </div>
 
-                <div class="info-block">
-                    <div class="info-label">getCurrentMentalState().status</div>
-                    <div class="info-value">
-                        <div class="code-block">
-                            <span class="code-syntax">&gt; Scanning for motivation...</span><br>
-                            <span class="code-syntax">&gt; ❌ Motivation not found</span><br>
-                            <span class="code-syntax">&gt; ☕ Caffeine levels: Dangerously optimal</span><br>
-                            <span class="code-syntax">&gt; 🧠 Impostor syndrome: Running in background</span><br>
-                            <span class="code-syntax">&gt; 💀 Existential dread: Optimized for performance</span><br>
-                            <span class="code-keyword">Status</span><span class="code-syntax">:</span> <span class="code-string">"Functional dysfunction"</span>
-                            <div class="meme-text">// At least I'm self-aware of my incompetence 🤷‍♂️</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-block">
-                    <div class="info-label">while(alive) { procrastinate(); }</div>
-                    <div class="info-value">
-                        <div class="code-block">
-                            <span class="code-keyword">const</span> <span class="code-string">typicalDay</span> <span class="code-syntax">= {</span><br>
-                            &nbsp;&nbsp;<span class="code-keyword">9am</span><span class="code-syntax">:</span> <span class="code-string">'Open IDE, pretend to be busy'</span><span class="code-syntax">,</span><br>
-                            &nbsp;&nbsp;<span class="code-keyword">11am</span><span class="code-syntax">:</span> <span class="code-string">'Actually write 3 lines of code'</span><span class="code-syntax">,</span><br>
-                            &nbsp;&nbsp;<span class="code-keyword">3pm</span><span class="code-syntax">:</span> <span class="code-string">'Blame JavaScript for everything'</span><span class="code-syntax">,</span><br>
-                            &nbsp;&nbsp;<span class="code-keyword">7pm</span><span class="code-syntax">:</span> <span class="code-string">'Question career choices'</span><span class="code-syntax">,</span><br>
-                            &nbsp;&nbsp;<span class="code-keyword">3am</span><span class="code-syntax">:</span> <span class="code-string">'Actually be productive'</span><br>
-                            <span class="code-syntax">};</span>
-                            <div class="meme-text" onclick="dailyJoke()">// Peak productivity happens when everyone else sleeps 🌙</div>
-                            <div class="personal-note">* Timeline may vary depending on coffee supply</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="info-block">
-                    <div class="info-label">git log --oneline --author="n00body"</div>
-                    <div class="info-value">
-                        <div class="code-block">
-                            <span class="code-syntax">4d2f8a1 Fix: Actually works now (hopefully)</span><br>
-                            <span class="code-syntax">3c7e9b4 Remove debug console.logs (oops)</span><br>
-                            <span class="code-syntax">2a1d5f8 WIP: Don't look at this commit</span><br>
-                            <span class="code-syntax">1b9c3e2 Add TODO comments everywhere</span><br>
-                            <span class="code-syntax">0f7a2d6 Initial commit (it's a miracle)</span><br>
-                            <div class="meme-text">// Commit messages by a professional procrastinator 📝</div>
-                        </div>
+                <div class="project-card">
+                    <h3 class="project-name">Facets</h3>
+                    <a href="https://t.me/thefacets" target="_blank" class="project-link">→ t.me/thefacets</a>
+                    <div class="project-status">Active</div>
+                    <p class="project-description">
+                        An app exploring moral dilemmas. Because life isn't black and white, it's mostly gray.
+                    </p>
+                    <div class="tech-stack">
+                        <span class="tech-tag">React</span>
+                        <span class="tech-tag">Next.js</span>
+                        <span class="tech-tag">Tailwind</span>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="right-panel">
-            <div class="projects-section">
-                <div class="ascii-projects" onclick="projectsRoast()">
- ██╗    ██╗ ██████╗ ██████╗ ██╗  ██╗███████╗    ██╗
- ██║    ██║██╔═══██╗██╔══██╗██║ ██╔╝██╔════╝   ██╔╝
- ██║ █╗ ██║██║   ██║██████╔╝█████╔╝ ███████╗  ██╔╝
- ██║███╗██║██║   ██║██╔══██╗██╔═██╗ ╚════██║ ██╔╝
- ╚███╔███╔╝╚██████╔╝██║  ██║██║  ██╗███████║██╔╝
-  ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝
-                </div>
-                
-                <div class="section-title">Projects (AKA "Things I Actually Finished")</div>
-                
-                <div class="project">
-                    <div class="project-name">
-                        <a href="https://t.me/circusle">Circusle</a>
-                    </div>
-                    <div class="project-desc">
-                        A reaction game that tests if your reflexes are faster than your ability to procrastinate. Spoiler: they're not.
-                    </div>
-                    <div class="project-tech">
-                        <span class="tech-item" onclick="techRoast('react')">React.useState()</span>
-                        <span class="tech-item" onclick="techRoast('tailwind')">Tailwind</span>
-                        <span class="tech-item" onclick="techRoast('next')">Next.js</span>
-                        <span class="tech-item" onclick="techRoast('hooks')">useEffect(or_not_use)</span>
-                    </div>
-                </div>
-                
-                <div class="project">
-                    <div class="project-name">
-                        <a href="https://t.me/thefacets">Facets</a>
-                    </div>
-                    <div class="project-desc">
-                        Moral dilemma simulator because apparently my life wasn't complicated enough. Each decision branches into deeper philosophical rabbit holes, much like my career path. Features include: ethical confusion and simulated wisdom.
-                    </div>
-                    <div class="project-tech">
-                        <span class="tech-item" onclick="techRoast('hooks')">React.useMorals(null)</span>
-                        <span class="tech-item" onclick="techRoast('css')">CSS</span>
-                        <span class="tech-item" onclick="techRoast('ssr')">Server-Side-Suffering</span>
-                        <span class="tech-item" onclick="techRoast('context')">Context.Existential</span>
-                    </div>
-                </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section">
+        <div class="container">
+            <div class="contact">
+                <h2 class="contact-title">// Get in touch</h2>
+                <a href="https://t.me/mrmrcrowley" target="_blank" class="contact-link">
+                    <span>@mrmrcrowley</span>
+                </a>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="debug-panel" id="debugPanel">
-        <div class="debug-title">🐛 Debug Console (Now With Extra Sarcasm)</div>
-        <div id="debugContent">
-            > Initializing self-deprecation protocols...<br>
-            > Loading impostor syndrome drivers...<br>
-            > Coffee dependency successfully injected<br>
-            > Warning: Ego.js not found (probably for the best)<br>
-            > Procrastination.exe is running in background<br>
-            > Ready to disappoint stakeholders 🚀
-        </div>
-    </div>
-
-    <div class="facts-overlay" id="factsOverlay">
-        <div class="close-btn" onclick="hideFacts()">✕</div>
-        <div style="color: var(--fg); margin-bottom: 1rem; font-weight: 500;">Uncomfortable Personal Truths™</div>
-        <div id="factsContent">
-            • Still googles "how to center a div" after 10+ years<br>
-            • Has 47 unfinished side projects<br>
-            • Commits to main branch like a rebel without a cause<br>
-            • Uses console.log() for debugging (and isn't ashamed)<br>
-            • Thinks CSS is black magic (it is)<br>
-            • Has impostor syndrome about having impostor syndrome<br>
-            • Prefers dark mode because bugs are less visible<br>
-            • Actually enjoys writing documentation (plot twist!)
-        </div>
-    </div>
+    <footer class="footer">
+        <p>© 2025 n00body | Built with vibe-coding energy ⚡</p>
+    </footer>
 
     <script>
-        let sarcasticMode = true;
-        let personalityCounter = 0;
-        let roastLevel = 1;
-        
-        const moods = [
-            '😴 Caffeinated & Sarcastic',
-            '🤡 Professionally Confused',
-            '😵 Existentially Optimized',
-            '🤖 Functionally Dysfunctional',
-            '💀 Deadline-Driven Panic',
-            '☕ Coffee-Powered Chaos'
+        // Typing Effect
+        const text = "Vibe-Code developer who kinda gets it, but not everything, though still gets it, even if not all of it. But Claude gets it. Sometimes with errors, but gets it.";
+        const typingElement = document.getElementById('typingText');
+        let charIndex = 0;
+
+        function typeText() {
+            if (charIndex < text.length) {
+                typingElement.textContent = text.substring(0, charIndex + 1);
+                charIndex++;
+                setTimeout(typeText, 30);
+            } else {
+                typingElement.innerHTML = text + '<span class="cursor"></span>';
+            }
+        }
+
+        setTimeout(typeText, 500);
+
+        // Background Code Generation
+        const codeSnippets = [
+            'const vibeCheck = () => true;',
+            'interface Developer { skills: string[]; }',
+            'export default function() { return <div>vibe</div>; }',
+            'type Mood = "coding" | "series" | "both";',
+            'async function build() { await deploy(); }',
+            'import { creativity } from "brain";',
+            'const [idea, setIdea] = useState(null);',
+            'useEffect(() => { code(); }, [inspiration]);',
+            '// TODO: understand everything',
+            'let understanding: number = Math.random();',
         ];
 
-        const vibeStatuses = [
-            'Questioning life choices & coding standards',
-            'Debating if HTML is a programming language',
-            'Wondering if senior means knowing more jQuery',
-            'Contemplating the void between commits',
-            'Achieving peak procrastination efficiency',
-            'Living in denial about code quality'
-        ];
+        const codeBg = document.getElementById('codeBg');
+        for (let i = 0; i < 50; i++) {
+            const line = document.createElement('div');
+            line.className = 'code-line';
+            line.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+            line.style.paddingLeft = Math.random() * 30 + 'rem';
+            codeBg.appendChild(line);
+        }
 
-        const aliases = [
-            'n00body',
-            'bug-factory',
-            'todo-collector',
-            'senior-junior',
-            'stack-overflow-dependent',
-            'caffeine-compiler'
-        ];
-
-        const sarcasticCommands = [
-            "procrastinator@reality-escape:~$ whoami\nError: Identity not found. Try sudo.",
-            "procrastinator@reality-escape:~$ sudo fix-life\nPermission denied. Try coffee first.",
-            "procrastinator@reality-escape:~$ git blame\nBlaming everyone but myself since 1991.",
-            "procrastinator@reality-escape:~$ npm install happiness\nPackage not found. Did you mean 'coffee'?",
-            "procrastinator@reality-escape:~$ man motivation\nNo manual entry for 'motivation'. See: procrastination(1)",
-            "procrastinator@reality-escape:~$ killall -9 impostor-syndrome\nProcess is immortal. Cannot kill."
-        ];
-
-        const roastMessages = [
-            "Fun fact: I've spent more time naming variables than actually solving problems 🤓",
-            "My code comments are just apologies to future me 📝",
-            "I debug by changing random things until it works ✨",
-            "My programming style is best described as 'aggressive copy-pasting' 📋",
-            "I have a PhD in Stack Overflow browsing 🎓",
-            "My biggest achievement? Making Hello World work on the first try... once 🏆"
-        ];
-
-        const techRoasts = {
-            react: "React: Because vanilla JS is for peasants who enjoy simplicity 👑",
-            tailwind: "Tailwind: Making HTML look like assembly language since 2017 🤯",
-            next: "Next.js: When you want React but with 200% more configuration anxiety 😰",
-            hooks: "React Hooks: Functional programming for people who hate classes but love confusion 🪝",
-            css: "CSS-in-JS: Because separation of concerns is so last decade 🎭",
-            ssr: "Server-Side Rendering: Fast for users, slow for developers' sanity 🏃‍♂️",
-            context: "Context API: Global state for people who think Redux is too mainstream 🌍"
+        // Scroll Animations
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -50px 0px'
         };
 
-        const toolRoasts = {
-            pen: "🖋️ The pen: Because sometimes you need to feel the physical pain of bad handwriting",
-            pencil: "✏️ The pencil: For when you want to make mistakes that can actually be erased",
-            brain: "🧠 The brain: Currently running on 15% capacity and 85% caffeine",
-            claude: "🤖 Claude: My AI therapist who judges my code but stays supportive"
-        };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
 
-        // Boot sequence
-        const bootTexts = ['boot-1', 'boot-2', 'boot-3', 'boot-4', 'boot-5'];
-        
-        bootTexts.forEach((id, index) => {
-            setTimeout(() => {
-                document.getElementById(id).classList.add('active');
-            }, index * 400);
+        document.querySelectorAll('.skills, .projects-grid, .contact').forEach(el => {
+            observer.observe(el);
         });
 
-        // Show status overlay after boot
-        setTimeout(() => {
-            document.getElementById('statusOverlay').classList.add('show');
-        }, 5000);
-
-        function toggleMood() {
-            const moodEl = document.querySelector('.mood-indicator');
-            personalityCounter = (personalityCounter + 1) % moods.length;
-            moodEl.textContent = moods[personalityCounter];
-            console.log(`Mood updated: ${moods[personalityCounter]} 🎭`);
-        }
-
-        function showSarcasticCommands() {
-            const randomCommand = sarcasticCommands[Math.floor(Math.random() * sarcasticCommands.length)];
-            alert(randomCommand);
-            
-            // Show debug panel after 3 clicks
-            if (!window.commandClicks) window.commandClicks = 0;
-            window.commandClicks++;
-            
-            if (window.commandClicks >= 3) {
-                document.getElementById('debugPanel').classList.add('show');
-            }
-        }
-
-        function roastMyself() {
-            const aliasEl = document.querySelector('.alias');
-            const currentIndex = aliases.indexOf(aliasEl.textContent);
-            const nextIndex = (currentIndex + 1) % aliases.length;
-            aliasEl.textContent = aliases[nextIndex];
-            
-            const randomRoast = roastMessages[Math.floor(Math.random() * roastMessages.length)];
-            console.log(randomRoast);
-            
-            if (nextIndex === 0) {
-                console.log("Back to n00body - the classic disappointment! 🎯");
-            }
-        }
-
-        function changeVibeStatus() {
-            const vibeEl = document.querySelector('.vibe-indicator');
-            const currentText = vibeEl.textContent;
-            const statusPart = currentText.split('Currently: ')[1];
-            const currentIndex = vibeStatuses.indexOf(statusPart);
-            const nextIndex = (currentIndex + 1) % vibeStatuses.length;
-            
-            vibeEl.innerHTML = `🎵 Currently: ${vibeStatuses[nextIndex]}`;
-            console.log(`New vibe: ${vibeStatuses[nextIndex]} 🎭`);
-        }
-
-        function randomRoast() {
-            const memeTexts = document.querySelectorAll('.meme-text');
-            const randomMeme = memeTexts[Math.floor(Math.random() * memeTexts.length)];
-            const originalText = randomMeme.textContent;
-            
-            randomMeme.textContent = "// Currently being roasted... 🔥";
-            setTimeout(() => {
-                randomMeme.textContent = originalText;
-            }, 2000);
-            
-            console.log(roastMessages[Math.floor(Math.random() * roastMessages.length)]);
-        }
-
-        function roastTool(tool) {
-            console.log(toolRoasts[tool]);
-            
-            // Secret combo: click all tools to unlock hidden feature
-            if (!window.toolClicks) window.toolClicks = [];
-            window.toolClicks.push(tool);
-            
-            if (window.toolClicks.length === 4) {
-                if (JSON.stringify(window.toolClicks.sort()) === JSON.stringify(['pen', 'pencil', 'brain', 'claude'].sort())) {
-                    alert('🎉 COMBO UNLOCKED: The Ultimate Procrastination Stack!\n\n"When analog meets digital meets existential crisis" 🎭');
-                }
-                window.toolClicks = [];
-            }
-        }
-
-        function philosophyJoke() {
-            const philosophies = [
-                "My code is like my life: poorly documented and full of bugs 🐛",
-                "I don't always test my code, but when I do, I do it in production 🚀",
-                "Programming is 10% writing code, 90% wondering why it doesn't work 🤔",
-                "My rubber duck quit - even it couldn't handle my logic 🦆"
-            ];
-            
-            console.log(philosophies[Math.floor(Math.random() * philosophies.length)]);
-        }
-
-        function dailyJoke() {
-            const jokes = [
-                "Peak productivity at 3AM is just my brain's rebellion against normalcy 🌙",
-                "I'm not nocturnal, I'm just allergically to deadlines during business hours ⏰",
-                "My circadian rhythm runs on coffee time, not solar time ☕",
-                "Why be productive during the day when you can disappoint people in real-time? 📞"
-            ];
-            
-            console.log(jokes[Math.floor(Math.random() * jokes.length)]);
-        }
-
-        function techRoast(tech) {
-            console.log(techRoasts[tech]);
-        }
-
-        function projectsRoast() {
-            const roasts = [
-                "Projects: Proof that I occasionally finish what I start! 🎯",
-                "These represent 2% of my coding attempts. The other 98% are in my 'someday' folder 📁",
-                "Warning: Projects may contain traces of actual competence ⚠️"
-            ];
-            
-            console.log(roasts[Math.floor(Math.random() * roasts.length)]);
-        }
-
-        function showPersonalFacts() {
-            document.getElementById('factsOverlay').classList.add('show');
-        }
-
-        function hideFacts() {
-            document.getElementById('factsOverlay').classList.remove('show');
-        }
-
-        // Keyboard shortcuts & easter eggs
-        let konamiCode = [];
-        const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                hideFacts();
-                document.getElementById('debugPanel').classList.remove('show');
-            }
-            
-            if (e.ctrlKey && e.key === 'r') {
-                e.preventDefault();
-                location.reload();
-            }
-
-            // Konami code for ultimate sarcasm mode
-            konamiCode.push(e.keyCode);
-            if (konamiCode.length > konamiSequence.length) {
-                konamiCode.shift();
-            }
-            
-            if (konamiCode.length === konamiSequence.length && 
-                konamiCode.every((code, i) => code === konamiSequence[i])) {
-                
-                document.body.style.animation = 'rainbow 0.5s infinite';
-                alert('🌈 ULTIMATE SARCASM MODE ACTIVATED! 🌈\n\nCongratulations! You found the most useless feature on this website!\n\nYour dedication to clicking random things is impressive. 🎭');
-                
-                setTimeout(() => {
-                    document.body.style.animation = 'none';
-                }, 5000);
-                
-                konamiCode = [];
-            }
-
-            // Secret debug mode
-            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-                document.getElementById('debugPanel').classList.toggle('show');
-                console.log('🐛 Sarcasm debug panel toggled! Welcome to my therapy session...');
-            }
-        });
-
-        // Random sarcastic updates to debug panel
-        setInterval(() => {
-            if (Math.random() > 0.85) {
-                const debugContent = document.getElementById('debugContent');
-                const updates = [
-                    "> Impostor syndrome level: MAXIMUM",
-                    "> Coffee.warmth() returned false. Crisis imminent.",
-                    "> Found 0 bugs, 247 features (all unintentional)",
-                    "> Motivation.exe has crashed. Reboot required.",
-                    "> Self-doubt successfully loaded",
-                    "> Deadline approaching. Panic mode: ENGAGED",
-                    "> Stack Overflow tab count: 47 (and counting)",
-                    "> Productivity: 404 Not Found"
-                ];
-                
-                debugContent.innerHTML += '<br>' + updates[Math.floor(Math.random() * updates.length)];
-                
-                // Limit lines
-                const lines = debugContent.innerHTML.split('<br>');
-                if (lines.length > 15) {
-                    debugContent.innerHTML = lines.slice(-10).join('<br>');
-                }
-            }
-        }, 6000);
-
-        // Random console philosophy
-        const consoleMemes = [
-            "console.log('Why do I do this to myself?'); // Every. Single. Day.",
-            "// TODO: Find the meaning of life (and fix this bug)",
-            "if (mentalHealth < 0) { drinkCoffee(); } // Infinite loop detected",
-            "/* This function works, but I have no idea why */",
-            "const happiness = false; // Const because it never changes",
-            "// I'm not paid enough for this level of existential dread"
+        // Floating Code Snippets
+        const floatingSnippets = [
+            '<html>\n  <body>\n    vibe\n  </body>\n</html>',
+            'function dream() {\n  return reality + imagination;\n}',
+            'class Life {\n  constructor() {\n    this.vibe = true;\n  }\n}',
+            'const solve = (problem) => {\n  return askClaude(problem);\n};'
         ];
 
-        setInterval(() => {
-            if (Math.random() > 0.9) {
-                console.log(consoleMemes[Math.floor(Math.random() * consoleMemes.length)]);
-            }
-        }, 8000);
+        function createFloatingSnippet() {
+            const snippet = document.createElement('div');
+            snippet.className = 'code-snippet';
+            snippet.textContent = floatingSnippets[Math.floor(Math.random() * floatingSnippets.length)];
+            snippet.style.top = Math.random() * 80 + '%';
+            snippet.style.left = Math.random() * 80 + '%';
+            document.body.appendChild(snippet);
+        }
 
-        // Enhanced hover effects
-        document.querySelectorAll('.project').forEach(project => {
-            project.addEventListener('mouseenter', () => {
-                project.style.paddingLeft = '1rem';
-            });
-            
-            project.addEventListener('mouseleave', () => {
-                project.style.paddingLeft = '0';
-            });
-        });
-
-        // Scroll animations
-        window.addEventListener('scroll', () => {
-            const scrolled = window.pageYOffset;
-            const elements = document.querySelectorAll('.info-block');
-            
-            elements.forEach((el, index) => {
-                const rate = scrolled * (-0.1 - index * 0.05);
-                el.style.transform = `translateY(${rate}px)`;
-            });
-
-            const scanlines = document.querySelector('.scanlines');
-            if (scanlines) {
-                scanlines.style.transform = `translateY(${scrolled * 0.1}px)`;
-            }
-        });
-
-        // Welcome message with personality
-        setTimeout(() => {
-            console.log('🎭 Welcome to my digital therapy session!');
-            console.log('Feel free to click around and discover just how many ways I can disappoint you!');
-            console.log('Pro tip: The more you interact, the more my impostor syndrome shows! ✨');
-            console.log('Remember: This website is a work in progress, much like my life! 🚧');
-        }, 6000);
+        for (let i = 0; i < 5; i++) {
+            createFloatingSnippet();
+        }
     </script>
 </body>
 </html>
-
