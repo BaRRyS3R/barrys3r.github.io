@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Transformice Clone</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui">
+            <div id="info">
+                <div id="player-info">ID: <span id="player-id">-</span></div>
+                <div id="role-info">Роль: <span id="player-role">Мышь</span></div>
+                <div id="players-online">Игроков: <span id="player-count">0</span></div>
+                <div id="ping-info">Пинг: <span id="ping-value">-</span>мс</div>
+                <div id="screen-size">Экран: <span id="screen-dimensions">-</span></div>
+            </div>
+            <div id="instructions">
+                <p><strong>📱 Адаптивная игра!</strong></p>
+                <p><strong>⚡ Lag-compensation включён</strong></p>
+                <p><strong>Управление:</strong></p>
+                <p>Стрелки/WASD - движение</p>
+                <p>Пробел/↑/W - прыжок</p>
+                <p>⬆️⬆️ Двойной прыжок в воздухе!</p>
+                <p>🧗 Wall-jump: прыжок у стены</p>
+                <p><strong>Шаман:</strong> ЛКМ/тап - строить платформу</p>
+            </div>
+            <div id="game-message"></div>
+        </div>
+        
+        <!-- Мобильные кнопки управления -->
+        <div id="mobile-controls">
+            <div id="mobile-left-area">
+                <button id="btn-left" class="mobile-btn direction-btn">◄</button>
+                <button id="btn-right" class="mobile-btn direction-btn">►</button>
+            </div>
+            <div id="mobile-right-area">
+                <button id="btn-jump" class="mobile-btn jump-btn">⬆</button>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
