@@ -32,12 +32,86 @@
             overflow-x: hidden;
         }
 
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 2px;
+            background: var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: var(--text-primary);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
             position: relative;
             z-index: 2;
+        }
+
+        /* Code Snippets Decoration */
+        .code-decoration {
+            position: fixed;
+            color: var(--text-tertiary);
+            font-size: 0.7rem;
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .code-decoration.top-left {
+            top: 10%;
+            left: 2%;
+        }
+
+        .code-decoration.top-right {
+            top: 15%;
+            right: 2%;
+        }
+
+        .code-decoration.middle-left {
+            top: 50%;
+            left: 1%;
+        }
+
+        .code-decoration.bottom-right {
+            bottom: 10%;
+            right: 2%;
         }
 
         /* WebGL Canvas Background */
@@ -50,8 +124,6 @@
             z-index: 0;
             opacity: 0.15;
         }
-
-
 
         /* Hero Section */
         .hero {
@@ -68,12 +140,20 @@
             margin-bottom: 1.5rem;
         }
 
-        .code-comment {
+        .terminal-prompt {
             color: var(--text-tertiary);
             font-size: 0.9rem;
             margin-bottom: 0.5rem;
             opacity: 0;
             animation: fadeIn 0.5s ease forwards 0.2s;
+        }
+
+        .terminal-prompt .user {
+            color: var(--text-secondary);
+        }
+
+        .terminal-prompt .path {
+            color: var(--text-tertiary);
         }
 
         @keyframes fadeIn {
@@ -201,7 +281,7 @@
             border-radius: 4px;
             font-size: 0.9rem;
             transition: all 0.3s ease;
-            cursor: default;
+            cursor: pointer;
             position: relative;
             overflow: hidden;
         }
@@ -225,6 +305,146 @@
             background-color: var(--hover-bg);
             border-color: var(--text-tertiary);
             transform: translateY(-3px) rotate(-2deg);
+        }
+
+        .skill-tag.active {
+            border-color: var(--text-secondary);
+        }
+
+        .skill-comment {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, top 0.3s ease;
+            z-index: 10;
+        }
+
+        .skill-tag:hover .skill-comment {
+            opacity: 1;
+            top: -35px;
+        }
+
+        /* Stats Section */
+        .stats {
+            margin: 3rem 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .stats.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            border-color: var(--text-tertiary);
+            transform: translateY(-3px);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Timeline Section */
+        .timeline {
+            margin: 4rem 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .timeline.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .timeline-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+        }
+
+        .timeline-title::before {
+            content: '// ';
+            color: var(--text-tertiary);
+        }
+
+        .timeline-items {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline-items::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            margin-bottom: 2rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.25rem;
+            top: 0.5rem;
+            width: 8px;
+            height: 8px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-bottom: 0.3rem;
+        }
+
+        .timeline-content {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
         }
 
         /* Projects Section */
@@ -287,7 +507,6 @@
             cursor: pointer;
         }
 
-        /* Animated border effect */
         .project-card::before {
             content: '';
             position: absolute;
@@ -323,70 +542,6 @@
             transform: translateY(-8px);
             border-color: var(--text-tertiary);
             box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-        }
-
-        .project-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.2rem;
-        }
-
-        .project-name {
-            font-size: 2rem;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            letter-spacing: -0.02em;
-        }
-
-        .project-card:hover .project-name {
-            letter-spacing: 0.02em;
-        }
-
-        .project-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            margin-bottom: 0.5rem;
-            margin-right: 1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            padding: 0.4rem 0.8rem;
-            border: 1px solid var(--border-color);
-            border-radius: 2px;
-            background: var(--bg-primary);
-        }
-
-        .project-link::after {
-            content: '↗';
-            transition: transform 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .project-link:hover {
-            color: var(--text-primary);
-            border-color: var(--text-tertiary);
-            background: var(--hover-bg);
-        }
-
-        .project-link:hover::after {
-            transform: translate(2px, -2px);
-        }
-
-        .project-links {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .telegram-badge {
-            font-size: 0.7rem;
-            color: var(--text-tertiary);
-            margin-left: 0.3rem;
         }
 
         .project-status {
@@ -440,12 +595,92 @@
             50% { opacity: 0.5; transform: scale(1.2); }
         }
 
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.2rem;
+        }
+
+        .project-name {
+            font-size: 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            letter-spacing: -0.02em;
+        }
+
+        .project-card:hover .project-name {
+            letter-spacing: 0.02em;
+        }
+
+        .project-links {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .project-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-right: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            background: var(--bg-primary);
+        }
+
+        .project-link::after {
+            content: '↗';
+            transition: transform 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .project-link:hover {
+            color: var(--text-primary);
+            border-color: var(--text-tertiary);
+            background: var(--hover-bg);
+        }
+
+        .project-link:hover::after {
+            transform: translate(2px, -2px);
+        }
+
+        .telegram-badge {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            margin-left: 0.3rem;
+        }
+
         .project-description {
             color: var(--text-secondary);
             font-size: 0.9rem;
-            margin-bottom: 1.8rem;
+            margin-bottom: 1.5rem;
             line-height: 1.7;
             min-height: 3.4rem;
+        }
+
+        .project-stats {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .project-stat {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        .project-stat span {
+            color: var(--text-secondary);
+            font-weight: 600;
         }
 
         .tech-stack {
@@ -561,12 +796,55 @@
             .projects-grid {
                 grid-template-columns: 1fr;
             }
+
+            .code-decoration {
+                display: none;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-text" id="loadingText">Initializing vibe-coding environment...</div>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loadingProgress"></div>
+        </div>
+    </div>
+
     <!-- Scroll Progress Indicator -->
     <div class="scroll-indicator" id="scrollIndicator"></div>
+
+    <!-- Code Decorations -->
+    <div class="code-decoration top-left">import React from 'react';
+import { VibeCoding } from 'brain';
+
+interface Developer {
+  name: string;
+  skills: string[];
+  status: 'coding' | 'vibing';
+}</div>
+
+    <div class="code-decoration top-right">const createProject = async () => {
+  const idea = await waitForInspiration();
+  const code = vibeWith(Claude);
+  return deploy(code);
+};</div>
+
+    <div class="code-decoration middle-left">// TODO: understand everything
+// FIXME: still learning
+// NOTE: it's working though</div>
+
+    <div class="code-decoration bottom-right">export default function Life() {
+  const [understanding, setUnderstanding] = 
+    useState<number>(Math.random());
+  
+  return <VibeCoding />;
+}</div>
 
     <!-- WebGL Canvas -->
     <canvas id="webgl-canvas"></canvas>
@@ -575,7 +853,9 @@
     <section class="hero">
         <div class="container">
             <div class="name-container">
-                <div class="code-comment">// username.toLowerCase()</div>
+                <div class="terminal-prompt">
+                    <span class="user">user</span>@<span class="user">localhost</span>:<span class="path">~</span>$
+                </div>
                 <h1 class="name">n00body</h1>
             </div>
             
@@ -598,13 +878,79 @@
             <div class="skills">
                 <div class="skills-title">const stack = [</div>
                 <div class="skills-list">
-                    <div class="skill-tag">'Hands'</div>
-                    <div class="skill-tag">'Brain'</div>
-                    <div class="skill-tag">'Claude'</div>
-                    <div class="skill-tag">'ChatGPT'</div>
-                    <div class="skill-tag">'Binge-watching series'</div>
+                    <div class="skill-tag" data-comment="// 80% of the work">
+                        'Hands'
+                        <div class="skill-comment">// 80% of the work</div>
+                    </div>
+                    <div class="skill-tag" data-comment="// the other 20%">
+                        'Brain'
+                        <div class="skill-comment">// the other 20%</div>
+                    </div>
+                    <div class="skill-tag" data-comment="// my senior developer">
+                        'Claude'
+                        <div class="skill-comment">// my senior developer</div>
+                    </div>
+                    <div class="skill-tag" data-comment="// backup senior developer">
+                        'ChatGPT'
+                        <div class="skill-comment">// backup senior developer</div>
+                    </div>
+                    <div class="skill-tag" data-comment="// research purposes only">
+                        'Binge-watching series'
+                        <div class="skill-comment">// research purposes only</div>
+                    </div>
                 </div>
                 <div class="skills-title">];</div>
+            </div>
+
+            <div class="stats">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">Years of vibe-coding</div>
+                        <div class="stat-value">~1</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Coffee + Energy drinks</div>
+                        <div class="stat-value">∞ cups</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Bugs created</div>
+                        <div class="stat-value">parseInt("many")</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Bugs fixed</div>
+                        <div class="stat-value">still counting...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline">
+                <h2 class="timeline-title">The Journey</h2>
+                <div class="timeline-items">
+                    <div class="timeline-item">
+                        <div class="timeline-date">August 2024</div>
+                        <div class="timeline-content">Started vibe-coding just for fun. Thought "why not?"</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">September 2024</div>
+                        <div class="timeline-content">Built small sites for myself. Realized this actually works. Refactoring of the site https://notfren.com</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">October 2024</div>
+                        <div class="timeline-content">Mini-app for "Ready Player One" movie quest. Things got serious.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">February 2025</div>
+                        <div class="timeline-content">Launched Facets app. Moral dilemmas went live.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">August 2025</div>
+                        <div class="timeline-content">Circusle in beta. Reflexes meet chaos.</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">Future</div>
+                        <div class="timeline-content">Who knows what's next? The vibe continues...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -614,29 +960,6 @@
         <div class="container">
             <h2 class="section-title">Projects</h2>
             <div class="projects-grid">
-                <div class="project-card">
-                    <div class="project-status">Beta Test</div>
-                    <div class="project-header">
-                        <h3 class="project-name">Circusle</h3>
-                    </div>
-                    <div class="project-links">
-                        <a href="https://t.me/circusle_bot" target="_blank" class="project-link">
-                            App<span class="telegram-badge">Telegram</span>
-                        </a>
-                        <a href="https://t.me/circusle" target="_blank" class="project-link">
-                            Channel<span class="telegram-badge">Telegram</span>
-                        </a>
-                    </div>
-                    <p class="project-description">
-                        A reaction-based game where your reflexes meet the chaos of the circus.
-                    </p>
-                    <div class="tech-stack">
-                        <span class="tech-tag">React</span>
-                        <span class="tech-tag">Next.js</span>
-                        <span class="tech-tag">Tailwind</span>
-                    </div>
-                </div>
-
                 <div class="project-card">
                     <div class="project-status active"><span class="pulse-dot"></span>Active</div>
                     <div class="project-header">
@@ -653,6 +976,40 @@
                     <p class="project-description">
                         An app exploring moral dilemmas. Because life isn't black and white, it's mostly gray.
                     </p>
+                    <div class="project-stats">
+                        <div class="project-stat">Launched: <span>Feb 22, 2025</span></div>
+                        <div class="project-stat">Users: <span>>1500</span></div>
+                        <div class="project-stat">Dilemmas: <span>>100</span></div>
+                        <div class="project-stat">Choices: <span>>11000</span></div>
+                    </div>
+                    <div class="tech-stack">
+                        <span class="tech-tag">React</span>
+                        <span class="tech-tag">Next.js</span>
+                        <span class="tech-tag">Tailwind</span>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-status">Beta Test</div>
+                    <div class="project-header">
+                        <h3 class="project-name">Circusle</h3>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://t.me/circusle_bot" target="_blank" class="project-link">
+                            App<span class="telegram-badge">Telegram</span>
+                        </a>
+                        <a href="https://t.me/circusle" target="_blank" class="project-link">
+                            Channel<span class="telegram-badge">Telegram</span>
+                        </a>
+                    </div>
+                    <p class="project-description">
+                        A reaction-based game where your reflexes meet the chaos of the circus.
+                    </p>
+                    <div class="project-stats">
+                        <div class="project-stat">Launch: <span>soon</span></div>
+                        <div class="project-stat">Users: <span>unknown</span></div>
+                        <div class="project-stat">Games: <span>unknown</span></div>
+                    </div>
                     <div class="tech-stack">
                         <span class="tech-tag">React</span>
                         <span class="tech-tag">Next.js</span>
@@ -676,6 +1033,45 @@
     </section>
 
     <script>
+        // Loading Screen Animation
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingProgress = document.getElementById('loadingProgress');
+        const loadingText = document.getElementById('loadingText');
+
+        const loadingMessages = [
+            'Initializing vibe-coding environment...',
+            'Loading dependencies...',
+            'Compiling creative thoughts...',
+            'Importing caffeine.js...',
+            'Synchronizing with Claude...',
+            'Ready to vibe 🚀'
+        ];
+
+        let messageIndex = 0;
+        let progress = 0;
+
+        const loadingInterval = setInterval(() => {
+            progress += Math.random() * 20;
+            if (progress >= 100) {
+                progress = 100;
+                loadingProgress.style.width = '100%';
+                clearInterval(loadingInterval);
+                
+                setTimeout(() => {
+                    loadingScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
+                }, 300);
+            } else {
+                loadingProgress.style.width = progress + '%';
+                if (messageIndex < loadingMessages.length - 1) {
+                    messageIndex++;
+                    loadingText.textContent = loadingMessages[messageIndex];
+                }
+            }
+        }, 400);
+
         // Typing Effect
         const text = "Vibe-Code developer who kinda gets it, but not everything, though still gets it, even if not all of it. But Claude gets it. Sometimes with errors, but gets it.";
         const typingElement = document.getElementById('typingText');
@@ -691,7 +1087,7 @@
             }
         }
 
-        setTimeout(typeText, 500);
+        setTimeout(typeText, 2500);
 
         // Scroll Progress Indicator
         const scrollIndicator = document.getElementById('scrollIndicator');
@@ -715,7 +1111,7 @@
             });
         }, observerOptions);
 
-        document.querySelectorAll('.skills, .projects-grid, .contact').forEach(el => {
+        document.querySelectorAll('.skills, .stats, .timeline, .projects-grid, .contact').forEach(el => {
             observer.observe(el);
         });
 
@@ -731,7 +1127,6 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Vertex Shader
         const vertexShaderSource = `
             attribute vec2 position;
             void main() {
@@ -739,7 +1134,6 @@
             }
         `;
 
-        // Fragment Shader
         const fragmentShaderSource = `
             precision mediump float;
             uniform float time;
@@ -796,12 +1190,9 @@
 
         function render(time) {
             time *= 0.001;
-
             gl.uniform1f(timeLocation, time);
             gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
             requestAnimationFrame(render);
         }
         requestAnimationFrame(render);
