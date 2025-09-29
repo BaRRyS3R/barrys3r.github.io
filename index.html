@@ -32,48 +32,6 @@
             overflow-x: hidden;
         }
 
-        /* Loading Screen */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-primary);
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            transition: opacity 0.5s ease;
-        }
-
-        .loading-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .loading-text {
-            font-size: 1rem;
-            color: var(--text-secondary);
-        }
-
-        .loading-bar {
-            width: 300px;
-            height: 2px;
-            background: var(--border-color);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .loading-progress {
-            height: 100%;
-            background: var(--text-primary);
-            width: 0;
-            transition: width 0.3s ease;
-        }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -504,7 +462,6 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            cursor: pointer;
         }
 
         .project-card::before {
@@ -808,14 +765,6 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-text" id="loadingText">Initializing vibe-coding environment...</div>
-        <div class="loading-bar">
-            <div class="loading-progress" id="loadingProgress"></div>
-        </div>
-    </div>
-
     <!-- Scroll Progress Indicator -->
     <div class="scroll-indicator" id="scrollIndicator"></div>
 
@@ -932,7 +881,7 @@ interface Developer {
                     </div>
                     <div class="timeline-item">
                         <div class="timeline-date">September 2024</div>
-                        <div class="timeline-content">Built small sites for myself. Realized this actually works. Refactoring of the site https://notfren.com</div>
+                        <div class="timeline-content">Built small sites for myself. Realized this actually works. Redesigned notfren.com.</div>
                     </div>
                     <div class="timeline-item">
                         <div class="timeline-date">October 2024</div>
@@ -1033,45 +982,6 @@ interface Developer {
     </section>
 
     <script>
-        // Loading Screen Animation
-        const loadingScreen = document.getElementById('loadingScreen');
-        const loadingProgress = document.getElementById('loadingProgress');
-        const loadingText = document.getElementById('loadingText');
-
-        const loadingMessages = [
-            'Initializing vibe-coding environment...',
-            'Loading dependencies...',
-            'Compiling creative thoughts...',
-            'Importing caffeine.js...',
-            'Synchronizing with Claude...',
-            'Ready to vibe 🚀'
-        ];
-
-        let messageIndex = 0;
-        let progress = 0;
-
-        const loadingInterval = setInterval(() => {
-            progress += Math.random() * 20;
-            if (progress >= 100) {
-                progress = 100;
-                loadingProgress.style.width = '100%';
-                clearInterval(loadingInterval);
-                
-                setTimeout(() => {
-                    loadingScreen.classList.add('fade-out');
-                    setTimeout(() => {
-                        loadingScreen.style.display = 'none';
-                    }, 500);
-                }, 300);
-            } else {
-                loadingProgress.style.width = progress + '%';
-                if (messageIndex < loadingMessages.length - 1) {
-                    messageIndex++;
-                    loadingText.textContent = loadingMessages[messageIndex];
-                }
-            }
-        }, 400);
-
         // Typing Effect
         const text = "Vibe-Code developer who kinda gets it, but not everything, though still gets it, even if not all of it. But Claude gets it. Sometimes with errors, but gets it.";
         const typingElement = document.getElementById('typingText');
@@ -1087,7 +997,7 @@ interface Developer {
             }
         }
 
-        setTimeout(typeText, 2500);
+        setTimeout(typeText, 500);
 
         // Scroll Progress Indicator
         const scrollIndicator = document.getElementById('scrollIndicator');
