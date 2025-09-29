@@ -16,6 +16,8 @@
             --text-tertiary: #606060;
             --border-color: #2a2a2a;
             --hover-bg: #1f1f1f;
+            --machine-yellow: #ffba08;
+            --machine-yellow-dim: rgba(255, 186, 8, 0.3);
         }
 
         * {
@@ -38,6 +40,77 @@
             padding: 0 2rem;
             position: relative;
             z-index: 2;
+        }
+
+        /* Machine Messages */
+        .machine-messages {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .machine-message {
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid var(--machine-yellow);
+            padding: 0.8rem 1.2rem;
+            font-size: 0.85rem;
+            color: var(--machine-yellow);
+            box-shadow: 0 0 20px var(--machine-yellow-dim);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+        }
+
+        .machine-message.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .machine-message.hide {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+
+        /* Yellow Box Frames */
+        .yellow-box {
+            position: relative;
+        }
+
+        .yellow-box::before,
+        .yellow-box::after {
+            content: '';
+            position: absolute;
+            border: 2px solid var(--machine-yellow);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .yellow-box::before {
+            top: -10px;
+            left: -10px;
+            width: 40px;
+            height: 40px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .yellow-box::after {
+            bottom: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .yellow-box:hover::before,
+        .yellow-box:hover::after {
+            opacity: 1;
         }
 
         /* Code Snippets Decoration */
@@ -81,6 +154,18 @@
             height: 100%;
             z-index: 0;
             opacity: 0.15;
+        }
+
+        /* Surveillance Header */
+        .surveillance-header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 0.75rem;
+            color: var(--machine-yellow);
+            z-index: 9999;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1s;
         }
 
         /* Hero Section */
@@ -139,6 +224,48 @@
             content: ' = "Alexander";';
             color: var(--text-tertiary);
             font-size: 1.5rem;
+        }
+
+        /* Machine Classification */
+        .machine-classification {
+            background: rgba(255, 186, 8, 0.05);
+            border: 1px solid var(--machine-yellow);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 0.8s ease forwards 1.5s;
+        }
+
+        .machine-classification::before {
+            content: 'THE MACHINE // CLASSIFICATION';
+            position: absolute;
+            top: -12px;
+            left: 10px;
+            background: var(--bg-primary);
+            padding: 0 0.5rem;
+            font-size: 0.7rem;
+            color: var(--machine-yellow);
+        }
+
+        .classification-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .classification-item {
+            font-size: 0.85rem;
+        }
+
+        .classification-label {
+            color: var(--text-tertiary);
+            margin-bottom: 0.3rem;
+        }
+
+        .classification-value {
+            color: var(--machine-yellow);
+            font-weight: 600;
         }
 
         .typing-container {
@@ -261,7 +388,7 @@
 
         .skill-tag:hover {
             background-color: var(--hover-bg);
-            border-color: var(--text-tertiary);
+            border-color: var(--machine-yellow);
             transform: translateY(-3px) rotate(-2deg);
         }
 
@@ -275,11 +402,11 @@
             left: 50%;
             transform: translateX(-50%);
             background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--machine-yellow);
             padding: 0.5rem 0.8rem;
             border-radius: 4px;
             font-size: 0.75rem;
-            color: var(--text-secondary);
+            color: var(--machine-yellow);
             white-space: nowrap;
             opacity: 0;
             pointer-events: none;
@@ -456,91 +583,77 @@
 
         .project-card {
             background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
+            border: 2px solid var(--machine-yellow);
             padding: 2.5rem;
-            border-radius: 2px;
+            border-radius: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            box-shadow: 0 0 20px var(--machine-yellow-dim);
+        }
+
+        /* Yellow corner brackets */
+        .project-card::before,
+        .project-card::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--machine-yellow);
+            transition: all 0.3s ease;
         }
 
         .project-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border: 1px solid transparent;
-            border-radius: 2px;
-            background: linear-gradient(90deg, 
-                var(--text-primary) 0%, 
-                transparent 50%, 
-                var(--text-primary) 100%
-            ) border-box;
-            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0;
-            transition: opacity 0.4s ease;
+            top: -2px;
+            left: -2px;
+            border-right: none;
+            border-bottom: none;
         }
 
-        .project-card:hover::before {
-            opacity: 0.5;
-            animation: borderRotate 3s linear infinite;
+        .project-card::after {
+            bottom: -2px;
+            right: -2px;
+            border-left: none;
+            border-top: none;
         }
 
-        @keyframes borderRotate {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
+        .project-card:hover::before,
+        .project-card:hover::after {
+            width: 30px;
+            height: 30px;
         }
 
         .project-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--text-tertiary);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            transform: translateY(-5px);
+            box-shadow: 0 0 40px var(--machine-yellow-dim);
+        }
+
+        .project-id {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 0.7rem;
+            color: var(--machine-yellow);
+            opacity: 0.7;
         }
 
         .project-status {
             position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            padding: 0;
-            background-color: transparent;
-            border: none;
-            font-size: 0.75rem;
-            color: var(--text-tertiary);
+            top: 10px;
+            right: 10px;
+            padding: 0.3rem 0.8rem;
+            background-color: rgba(255, 186, 8, 0.1);
+            border: 1px solid var(--machine-yellow);
+            font-size: 0.7rem;
+            color: var(--machine-yellow);
             transition: all 0.3s ease;
-        }
-
-        .project-status::before {
-            content: '{ ';
-            color: var(--border-color);
-        }
-
-        .project-status::after {
-            content: ' }';
-            color: var(--border-color);
-        }
-
-        .project-card:hover .project-status {
-            color: var(--text-secondary);
-        }
-
-        .project-card:hover .project-status::before,
-        .project-card:hover .project-status::after {
-            color: var(--text-tertiary);
-        }
-
-        .project-status.active {
-            padding: 0;
         }
 
         .project-status.active .pulse-dot {
             display: inline-block;
             width: 6px;
             height: 6px;
-            background: var(--text-primary);
+            background: var(--machine-yellow);
             border-radius: 50%;
             margin-right: 6px;
             animation: pulse 2s ease-in-out infinite;
@@ -557,6 +670,7 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 1.2rem;
+            margin-top: 1.5rem;
         }
 
         .project-name {
@@ -564,10 +678,7 @@
             font-weight: 600;
             transition: all 0.3s ease;
             letter-spacing: -0.02em;
-        }
-
-        .project-card:hover .project-name {
-            letter-spacing: 0.02em;
+            color: var(--machine-yellow);
         }
 
         .project-links {
@@ -600,8 +711,8 @@
         }
 
         .project-link:hover {
-            color: var(--text-primary);
-            border-color: var(--text-tertiary);
+            color: var(--machine-yellow);
+            border-color: var(--machine-yellow);
             background: var(--hover-bg);
         }
 
@@ -636,7 +747,7 @@
         }
 
         .project-stat span {
-            color: var(--text-secondary);
+            color: var(--machine-yellow);
             font-weight: 600;
         }
 
@@ -731,7 +842,7 @@
             top: 0;
             left: 0;
             height: 3px;
-            background: linear-gradient(90deg, var(--text-primary), transparent);
+            background: linear-gradient(90deg, var(--machine-yellow), transparent);
             z-index: 9999;
             transition: width 0.1s ease;
         }
@@ -761,10 +872,34 @@
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+
+            .surveillance-header {
+                font-size: 0.65rem;
+                top: 10px;
+                left: 10px;
+            }
+
+            .machine-messages {
+                right: 10px;
+                top: 60px;
+            }
+
+            .machine-message {
+                font-size: 0.75rem;
+                padding: 0.6rem 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Surveillance Header -->
+    <div class="surveillance-header">
+        SURVEILLANCE: ACTIVE | ADMIN ACCESS: GRANTED
+    </div>
+
+    <!-- Machine Messages -->
+    <div class="machine-messages" id="machineMessages"></div>
+
     <!-- Scroll Progress Indicator -->
     <div class="scroll-indicator" id="scrollIndicator"></div>
 
@@ -801,11 +936,33 @@ interface Developer {
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <div class="name-container">
+            <div class="name-container yellow-box">
                 <div class="terminal-prompt">
                     <span class="user">user</span>@<span class="user">localhost</span>:<span class="path">~</span>$
                 </div>
                 <h1 class="name">n00body</h1>
+            </div>
+
+            <!-- Machine Classification System -->
+            <div class="machine-classification">
+                <div class="classification-grid">
+                    <div class="classification-item">
+                        <div class="classification-label">ID:</div>
+                        <div class="classification-value">n00body_033</div>
+                    </div>
+                    <div class="classification-item">
+                        <div class="classification-label">CLASSIFICATION:</div>
+                        <div class="classification-value">ASSET</div>
+                    </div>
+                    <div class="classification-item">
+                        <div class="classification-label">THREAT LEVEL:</div>
+                        <div class="classification-value">MINIMAL</div>
+                    </div>
+                    <div class="classification-item">
+                        <div class="classification-label">RELEVANCE:</div>
+                        <div class="classification-value">████████ 87%</div>
+                    </div>
+                </div>
             </div>
             
             <div class="typing-container">
@@ -817,7 +974,7 @@ interface Developer {
                     <span>age:</span> 33
                 </div>
                 <div class="meta-item">
-                    <span>location:</span> { lat: '??', lng: '??' }
+                    <span>location:</span> [TRACKED]
                 </div>
                 <div class="meta-item">
                     <span>status:</span> 'vibe-coding'
@@ -827,23 +984,23 @@ interface Developer {
             <div class="skills">
                 <div class="skills-title">const stack = [</div>
                 <div class="skills-list">
-                    <div class="skill-tag" data-comment="// 80% of the work">
+                    <div class="skill-tag yellow-box">
                         'Hands'
                         <div class="skill-comment">// 80% of the work</div>
                     </div>
-                    <div class="skill-tag" data-comment="// the other 20%">
+                    <div class="skill-tag yellow-box">
                         'Brain'
                         <div class="skill-comment">// the other 20%</div>
                     </div>
-                    <div class="skill-tag" data-comment="// my senior developer">
-                        'Claude'
-                        <div class="skill-comment">// my senior developer</div>
+                    <div class="skill-tag yellow-box">
+                        'Claude (AI Companion #1)'
+                        <div class="skill-comment">// your friendly surveillance system</div>
                     </div>
-                    <div class="skill-tag" data-comment="// backup senior developer">
-                        'ChatGPT'
-                        <div class="skill-comment">// backup senior developer</div>
+                    <div class="skill-tag yellow-box">
+                        'ChatGPT (AI Companion #2)'
+                        <div class="skill-comment">// backup surveillance system</div>
                     </div>
-                    <div class="skill-tag" data-comment="// research purposes only">
+                    <div class="skill-tag yellow-box">
                         'Binge-watching series'
                         <div class="skill-comment">// research purposes only</div>
                     </div>
@@ -853,19 +1010,19 @@ interface Developer {
 
             <div class="stats">
                 <div class="stats-grid">
-                    <div class="stat-item">
+                    <div class="stat-item yellow-box">
                         <div class="stat-label">Years of vibe-coding</div>
                         <div class="stat-value">~1</div>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item yellow-box">
                         <div class="stat-label">Coffee + Energy drinks</div>
                         <div class="stat-value">∞ cups</div>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item yellow-box">
                         <div class="stat-label">Bugs created</div>
                         <div class="stat-value">parseInt("many")</div>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item yellow-box">
                         <div class="stat-label">Bugs fixed</div>
                         <div class="stat-value">still counting...</div>
                     </div>
@@ -907,10 +1064,13 @@ interface Developer {
     <!-- Projects Section -->
     <section class="section">
         <div class="container">
-            <h2 class="section-title">Projects</h2>
+            <h2 class="section-title">Projects of Interest</h2>
             <div class="projects-grid">
                 <div class="project-card">
-                    <div class="project-status active"><span class="pulse-dot"></span>Active</div>
+                    <div class="project-id">ID: POI_001</div>
+                    <div class="project-status active">
+                        <span class="pulse-dot"></span>RELEVANT
+                    </div>
                     <div class="project-header">
                         <h3 class="project-name">Facets</h3>
                     </div>
@@ -939,7 +1099,8 @@ interface Developer {
                 </div>
 
                 <div class="project-card">
-                    <div class="project-status">Beta Test</div>
+                    <div class="project-id">ID: POI_002</div>
+                    <div class="project-status">MONITORING</div>
                     <div class="project-header">
                         <h3 class="project-name">Circusle</h3>
                     </div>
@@ -974,7 +1135,7 @@ interface Developer {
         <div class="container">
             <div class="contact">
                 <h2 class="contact-title">// Get in touch</h2>
-                <a href="https://t.me/mrmrcrowley" target="_blank" class="contact-link">
+                <a href="https://t.me/mrmrcrowley" target="_blank" class="contact-link yellow-box">
                     <span>@mrmrcrowley</span>
                 </a>
             </div>
@@ -982,6 +1143,38 @@ interface Developer {
     </section>
 
     <script>
+        // Machine Messages System
+        const machineMessages = [
+            'NEW ASSET DETECTED',
+            'ANALYZING DEVELOPER...',
+            'CLASSIFICATION: ASSET',
+            'THREAT LEVEL: MINIMAL',
+            'MONITORING ACTIVE',
+            'YOU ARE BEING WATCHED'
+        ];
+
+        function showMachineMessage(text, delay) {
+            setTimeout(() => {
+                const container = document.getElementById('machineMessages');
+                const message = document.createElement('div');
+                message.className = 'machine-message';
+                message.textContent = text;
+                container.appendChild(message);
+
+                setTimeout(() => message.classList.add('show'), 10);
+
+                setTimeout(() => {
+                    message.classList.add('hide');
+                    setTimeout(() => message.remove(), 500);
+                }, 3000);
+            }, delay);
+        }
+
+        // Show messages sequentially
+        machineMessages.forEach((msg, index) => {
+            showMachineMessage(msg, 1000 + (index * 1500));
+        });
+
         // Typing Effect
         const text = "Vibe-Code developer who kinda gets it, but not everything, though still gets it, even if not all of it. But Claude gets it. Sometimes with errors, but gets it.";
         const typingElement = document.getElementById('typingText');
