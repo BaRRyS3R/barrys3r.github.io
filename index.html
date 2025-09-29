@@ -36,27 +36,22 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
+            position: relative;
+            z-index: 2;
         }
 
-        /* Code Background Elements */
-        .code-bg {
+        /* WebGL Canvas Background */
+        #webgl-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
             z-index: 0;
-            opacity: 0.05;
-            font-size: 0.75rem;
-            line-height: 1.8;
-            overflow: hidden;
+            opacity: 0.15;
         }
 
-        .code-line {
-            color: var(--text-secondary);
-            white-space: nowrap;
-        }
+
 
         /* Hero Section */
         .hero {
@@ -66,16 +61,23 @@
             justify-content: center;
             position: relative;
             z-index: 1;
+            padding: 2rem 0;
         }
 
         .name-container {
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .code-comment {
             color: var(--text-tertiary);
             font-size: 0.9rem;
             margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards 0.2s;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
 
         .name {
@@ -84,6 +86,9 @@
             letter-spacing: -0.02em;
             margin-bottom: 0.5rem;
             position: relative;
+            display: inline-block;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards 0.4s;
         }
 
         .name::before {
@@ -99,14 +104,14 @@
         }
 
         .typing-container {
-            min-height: 120px;
+            min-height: 80px;
         }
 
         .bio {
             font-size: 1.1rem;
             color: var(--text-secondary);
             max-width: 700px;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             line-height: 1.8;
         }
 
@@ -128,12 +133,36 @@
             display: flex;
             gap: 2rem;
             flex-wrap: wrap;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
         .meta-item {
             color: var(--text-tertiary);
             font-size: 0.9rem;
+            transition: all 0.3s ease;
+            cursor: default;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .meta-item:nth-child(1) { animation-delay: 0.6s; }
+        .meta-item:nth-child(2) { animation-delay: 0.7s; }
+        .meta-item:nth-child(3) { animation-delay: 0.8s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .meta-item:hover {
+            color: var(--text-secondary);
+            transform: translateX(5px);
         }
 
         .meta-item span {
@@ -142,9 +171,9 @@
 
         /* Skills Section */
         .skills {
-            margin: 4rem 0;
+            margin: 2.5rem 0;
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
 
@@ -173,29 +202,44 @@
             font-size: 0.9rem;
             transition: all 0.3s ease;
             cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-tag::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .skill-tag:hover::before {
+            left: 100%;
         }
 
         .skill-tag:hover {
             background-color: var(--hover-bg);
             border-color: var(--text-tertiary);
-            transform: translateY(-2px);
+            transform: translateY(-3px) rotate(-2deg);
         }
 
         /* Projects Section */
         .section {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
+            padding: 3rem 0;
             position: relative;
             z-index: 1;
-            padding: 4rem 0;
         }
 
         .section-title {
             font-size: 2.5rem;
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
             color: var(--text-primary);
             position: relative;
+            display: inline-block;
         }
 
         .section-title::before {
@@ -203,12 +247,27 @@
             color: var(--text-tertiary);
         }
 
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--text-primary), transparent);
+            animation: lineGrow 1.5s ease forwards;
+        }
+
+        @keyframes lineGrow {
+            to { width: 100%; }
+        }
+
         .projects-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 2rem;
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
 
@@ -220,91 +279,208 @@
         .project-card {
             background-color: var(--bg-secondary);
             border: 1px solid var(--border-color);
-            padding: 2rem;
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            padding: 2.5rem;
+            border-radius: 2px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
 
+        /* Animated border effect */
         .project-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--text-primary), transparent);
+            right: 0;
+            bottom: 0;
+            border: 1px solid transparent;
+            border-radius: 2px;
+            background: linear-gradient(90deg, 
+                var(--text-primary) 0%, 
+                transparent 50%, 
+                var(--text-primary) 100%
+            ) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
             opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .project-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--text-tertiary);
+            transition: opacity 0.4s ease;
         }
 
         .project-card:hover::before {
-            opacity: 0.3;
+            opacity: 0.5;
+            animation: borderRotate 3s linear infinite;
+        }
+
+        @keyframes borderRotate {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--text-tertiary);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.2rem;
         }
 
         .project-name {
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            letter-spacing: -0.02em;
+        }
+
+        .project-card:hover .project-name {
+            letter-spacing: 0.02em;
         }
 
         .project-link {
             color: var(--text-secondary);
             text-decoration: none;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-bottom: 0.5rem;
+            margin-right: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            background: var(--bg-primary);
+        }
+
+        .project-link::after {
+            content: '↗';
+            transition: transform 0.3s ease;
             font-size: 0.9rem;
-            display: inline-block;
-            margin-bottom: 1rem;
-            transition: color 0.3s ease;
         }
 
         .project-link:hover {
             color: var(--text-primary);
+            border-color: var(--text-tertiary);
+            background: var(--hover-bg);
+        }
+
+        .project-link:hover::after {
+            transform: translate(2px, -2px);
+        }
+
+        .project-links {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .telegram-badge {
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            margin-left: 0.3rem;
         }
 
         .project-status {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 0;
+            background-color: transparent;
+            border: none;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            transition: all 0.3s ease;
+        }
+
+        .project-status::before {
+            content: '{ ';
+            color: var(--border-color);
+        }
+
+        .project-status::after {
+            content: ' }';
+            color: var(--border-color);
+        }
+
+        .project-card:hover .project-status {
+            color: var(--text-secondary);
+        }
+
+        .project-card:hover .project-status::before,
+        .project-card:hover .project-status::after {
+            color: var(--text-tertiary);
+        }
+
+        .project-status.active {
+            padding: 0;
+        }
+
+        .project-status.active .pulse-dot {
             display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
+            width: 6px;
+            height: 6px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s ease-in-out infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
         }
 
         .project-description {
             color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
+            font-size: 0.9rem;
+            margin-bottom: 1.8rem;
+            line-height: 1.7;
+            min-height: 3.4rem;
         }
 
         .tech-stack {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.6rem;
             flex-wrap: wrap;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
         }
 
         .tech-tag {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-tertiary);
-            padding: 0.25rem 0.5rem;
+            padding: 0.3rem 0.7rem;
             border: 1px solid var(--border-color);
-            border-radius: 3px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            background: transparent;
+            position: relative;
+        }
+
+        .tech-tag:hover {
+            color: var(--text-secondary);
+            border-color: var(--text-secondary);
+            transform: translateY(-2px);
+            background: var(--hover-bg);
         }
 
         /* Contact Section */
         .contact {
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(20px);
             transition: opacity 0.6s ease, transform 0.6s ease;
             text-align: center;
-            padding: 4rem 0 6rem 0;
+            padding: 3rem 0 4rem 0;
         }
 
         .contact.visible {
@@ -324,36 +500,48 @@
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 1.1rem;
-            padding: 1rem 2rem;
+            padding: 1.2rem 2.5rem;
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 2px;
             transition: all 0.3s ease;
             background-color: var(--bg-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .contact-link::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .contact-link:hover::before {
+            width: 400px;
+            height: 400px;
         }
 
         .contact-link:hover {
             color: var(--text-primary);
             border-color: var(--text-tertiary);
-            transform: translateY(-3px);
+            transform: translateY(-5px);
         }
 
-        .footer {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-tertiary);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        /* Code Snippet Floating Elements */
-        .code-snippet {
+        /* Scroll indicator */
+        .scroll-indicator {
             position: fixed;
-            color: var(--text-tertiary);
-            font-size: 0.75rem;
-            opacity: 0.1;
-            pointer-events: none;
-            z-index: 0;
-            line-height: 1.5;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--text-primary), transparent);
+            z-index: 9999;
+            transition: width 0.1s ease;
         }
 
         @media (max-width: 768px) {
@@ -377,8 +565,11 @@
     </style>
 </head>
 <body>
-    <!-- Background Code Elements -->
-    <div class="code-bg" id="codeBg"></div>
+    <!-- Scroll Progress Indicator -->
+    <div class="scroll-indicator" id="scrollIndicator"></div>
+
+    <!-- WebGL Canvas -->
+    <canvas id="webgl-canvas"></canvas>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -424,9 +615,18 @@
             <h2 class="section-title">Projects</h2>
             <div class="projects-grid">
                 <div class="project-card">
-                    <h3 class="project-name">Circusle</h3>
-                    <a href="https://t.me/circusle" target="_blank" class="project-link">→ t.me/circusle</a>
-                    <div class="project-status">Beta Testing</div>
+                    <div class="project-status">Beta Test</div>
+                    <div class="project-header">
+                        <h3 class="project-name">Circusle</h3>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://t.me/circusle_bot" target="_blank" class="project-link">
+                            App<span class="telegram-badge">Telegram</span>
+                        </a>
+                        <a href="https://t.me/circusle" target="_blank" class="project-link">
+                            Channel<span class="telegram-badge">Telegram</span>
+                        </a>
+                    </div>
                     <p class="project-description">
                         A reaction-based game where your reflexes meet the chaos of the circus.
                     </p>
@@ -438,9 +638,18 @@
                 </div>
 
                 <div class="project-card">
-                    <h3 class="project-name">Facets</h3>
-                    <a href="https://t.me/thefacets" target="_blank" class="project-link">→ t.me/thefacets</a>
-                    <div class="project-status">Active</div>
+                    <div class="project-status active"><span class="pulse-dot"></span>Active</div>
+                    <div class="project-header">
+                        <h3 class="project-name">Facets</h3>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://t.me/thefacets_bot" target="_blank" class="project-link">
+                            App<span class="telegram-badge">Telegram</span>
+                        </a>
+                        <a href="https://t.me/thefacets" target="_blank" class="project-link">
+                            Channel<span class="telegram-badge">Telegram</span>
+                        </a>
+                    </div>
                     <p class="project-description">
                         An app exploring moral dilemmas. Because life isn't black and white, it's mostly gray.
                     </p>
@@ -466,10 +675,6 @@
         </div>
     </section>
 
-    <footer class="footer">
-        <p>© 2025 n00body | Built with vibe-coding energy ⚡</p>
-    </footer>
-
     <script>
         // Typing Effect
         const text = "Vibe-Code developer who kinda gets it, but not everything, though still gets it, even if not all of it. But Claude gets it. Sometimes with errors, but gets it.";
@@ -488,32 +693,17 @@
 
         setTimeout(typeText, 500);
 
-        // Background Code Generation
-        const codeSnippets = [
-            'const vibeCheck = () => true;',
-            'interface Developer { skills: string[]; }',
-            'export default function() { return <div>vibe</div>; }',
-            'type Mood = "coding" | "series" | "both";',
-            'async function build() { await deploy(); }',
-            'import { creativity } from "brain";',
-            'const [idea, setIdea] = useState(null);',
-            'useEffect(() => { code(); }, [inspiration]);',
-            '// TODO: understand everything',
-            'let understanding: number = Math.random();',
-        ];
-
-        const codeBg = document.getElementById('codeBg');
-        for (let i = 0; i < 50; i++) {
-            const line = document.createElement('div');
-            line.className = 'code-line';
-            line.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
-            line.style.paddingLeft = Math.random() * 30 + 'rem';
-            codeBg.appendChild(line);
-        }
+        // Scroll Progress Indicator
+        const scrollIndicator = document.getElementById('scrollIndicator');
+        window.addEventListener('scroll', () => {
+            const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (window.scrollY / windowHeight) * 100;
+            scrollIndicator.style.width = scrolled + '%';
+        });
 
         // Scroll Animations
         const observerOptions = {
-            threshold: 0.2,
+            threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
         };
 
@@ -529,26 +719,92 @@
             observer.observe(el);
         });
 
-        // Floating Code Snippets
-        const floatingSnippets = [
-            '<html>\n  <body>\n    vibe\n  </body>\n</html>',
-            'function dream() {\n  return reality + imagination;\n}',
-            'class Life {\n  constructor() {\n    this.vibe = true;\n  }\n}',
-            'const solve = (problem) => {\n  return askClaude(problem);\n};'
-        ];
+        // WebGL Background Animation
+        const canvas = document.getElementById('webgl-canvas');
+        const gl = canvas.getContext('webgl');
 
-        function createFloatingSnippet() {
-            const snippet = document.createElement('div');
-            snippet.className = 'code-snippet';
-            snippet.textContent = floatingSnippets[Math.floor(Math.random() * floatingSnippets.length)];
-            snippet.style.top = Math.random() * 80 + '%';
-            snippet.style.left = Math.random() * 80 + '%';
-            document.body.appendChild(snippet);
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Vertex Shader
+        const vertexShaderSource = `
+            attribute vec2 position;
+            void main() {
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        `;
+
+        // Fragment Shader
+        const fragmentShaderSource = `
+            precision mediump float;
+            uniform float time;
+            uniform vec2 resolution;
+
+            void main() {
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
+                
+                float wave1 = sin(uv.x * 10.0 + time * 0.5) * 0.5 + 0.5;
+                float wave2 = sin(uv.y * 10.0 + time * 0.3) * 0.5 + 0.5;
+                float pattern = wave1 * wave2;
+                
+                float grid = mod(uv.x * 50.0, 1.0) * mod(uv.y * 50.0, 1.0);
+                grid = step(0.95, grid);
+                
+                float value = pattern * 0.3 + grid * 0.7;
+                
+                gl_FragColor = vec4(vec3(value), 1.0);
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            return shader;
         }
 
-        for (let i = 0; i < 5; i++) {
-            createFloatingSnippet();
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        const positions = new Float32Array([
+            -1, -1,
+            1, -1,
+            -1, 1,
+            1, 1,
+        ]);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        const positionLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const timeLocation = gl.getUniformLocation(program, 'time');
+        const resolutionLocation = gl.getUniformLocation(program, 'resolution');
+
+        function render(time) {
+            time *= 0.001;
+
+            gl.uniform1f(timeLocation, time);
+            gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            requestAnimationFrame(render);
         }
+        requestAnimationFrame(render);
     </script>
 </body>
 </html>
